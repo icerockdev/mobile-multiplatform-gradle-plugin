@@ -5,7 +5,6 @@
 plugins {
     `kotlin-dsl`
     `maven-publish`
-    id("com.github.b3er.local.properties") version "1.1"
 }
 
 repositories {
@@ -28,8 +27,8 @@ publishing {
         name = "bintray"
 
         credentials {
-            username = properties["BINTRAY_USER"] as? String
-            password = properties["BINTRAY_KEY"] as? String
+            username = System.getProperty("BINTRAY_USER")
+            password = System.getProperty("BINTRAY_KEY")
         }
     }
 
