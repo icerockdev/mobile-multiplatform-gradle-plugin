@@ -23,7 +23,7 @@ kotlinDslPluginOptions {
 }
 
 publishing {
-    repositories.maven("https://api.bintray.com/maven/icerockdev/moko/mobile-multiplatform/;publish=1") {
+    repositories.maven("https://api.bintray.com/maven/icerockdev/plugins/mobile-multiplatform/;publish=1") {
         name = "bintray"
 
         credentials {
