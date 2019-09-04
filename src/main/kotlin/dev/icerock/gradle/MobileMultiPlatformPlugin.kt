@@ -41,12 +41,8 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
             sourceSets.run {
                 val androidMain by getting {}
                 val commonMain by getting {}
-                val iosArm64Main by getting {
-                    kotlin.srcDir(target.file("src/iosMain/kotlin"))
-                }
-                val iosX64Main by getting {
-                    kotlin.srcDir(target.file("src/iosMain/kotlin"))
-                }
+                val iosArm64Main by getting {}
+                val iosX64Main by getting {}
             }
         }
 
