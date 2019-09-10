@@ -14,8 +14,8 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("com.android.tools.build:gradle:3.4.1")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.50")
+    compileOnly("com.android.tools.build:gradle:3.4.1")
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.50")
 }
 
 kotlinDslPluginOptions {
@@ -36,7 +36,7 @@ publishing {
         register("plugin", MavenPublication::class) {
             groupId = "dev.icerock"
             artifactId = "mobile-multiplatform"
-            version = "0.2.0"
+            version = "0.3.0"
 
             from(components["java"])
         }
