@@ -12,7 +12,7 @@ fun Project.setupFramework(
     val configureIos: KotlinNativeTarget.() -> Unit = {
         binaries {
             framework("MultiPlatformLibrary") {
-                freeCompilerArgs.add("-Xobjc-generics")
+                freeCompilerArgs += "-Xobjc-generics"
 
                 exports.forEach { it.export(project, this) }
             }
