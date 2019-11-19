@@ -37,13 +37,6 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
             android {
                 publishLibraryVariants("release", "debug")
             }
-
-            sourceSets.run {
-                val androidMain by getting {}
-                val commonMain by getting {}
-                val iosArm64Main by getting {}
-                val iosX64Main by getting {}
-            }
         }
 
         target.afterEvaluate {
