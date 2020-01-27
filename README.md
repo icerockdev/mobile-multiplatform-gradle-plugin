@@ -14,9 +14,9 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.4.0")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.60")
-    implementation("com.android.tools.build:gradle:3.5.2")
+    implementation("dev.icerock:mobile-multiplatform:0.5.0")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61")
+    implementation("com.android.tools.build:gradle:3.5.3")
 }
 ```
 
@@ -68,6 +68,18 @@ dependencies {
 setupFramework(exports = listOf(mokoTime))
 ```
 mokoTime will be exported to framework header.
+
+### Setup CocoaPods interop
+`build.gradle.kts`
+```kotlin
+cocoaPods {
+    podsProject = file("../ios-app/Pods/Pods.xcodeproj") // here should be path to your Pods project
+
+    pod("MBProgressHUD") // create cInterop and link with CocoaPod where schema and module is same
+    pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat") // create cInterop and link with CocoaPod where schema and module is different
+    pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat", onlyLink = true) // not create cInterop - just link framework with this CocoaPod
+}
+```
 
 ## License
         
