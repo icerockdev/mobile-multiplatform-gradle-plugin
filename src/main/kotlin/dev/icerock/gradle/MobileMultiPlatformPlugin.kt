@@ -136,7 +136,7 @@ linkerOpts = -framework ${pod.module}
             KonanTarget.IOS_X64 -> "iphonesimulator" to "x86_64"
             else -> throw IllegalArgumentException("${kotlinNativeTarget.konanTarget} is unsupported")
         }
-        val cocoapodsOutputDir = File(project.rootProject.buildDir, "cocoapods")
+        val cocoapodsOutputDir = File(project.buildDir, "cocoapods")
         val capitalizedPodName = pod.capitalizedModule
         val capitalizedSdk = arch.first.capitalize()
         val capitalizedArch = arch.second.capitalize()
