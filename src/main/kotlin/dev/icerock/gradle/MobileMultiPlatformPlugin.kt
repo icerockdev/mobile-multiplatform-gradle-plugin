@@ -189,6 +189,7 @@ linkerOpts = -framework ${pod.module}
         val podsProjectPath = podsProject.absolutePath
 
         val podBuildDir = outputDir.absolutePath
+        val derivedData = File(outputDir, "DerivedData").absolutePath
         val podCmd = "SYMROOT=$podBuildDir"
         val cmdLine = arrayOf(
             "xcodebuild",
@@ -196,6 +197,7 @@ linkerOpts = -framework ${pod.module}
             "-scheme", scheme,
             "-sdk", arch.first,
             "-arch", arch.second,
+            "-derivedDataPath", derivedData,
             podCmd,
             "build"
         )
