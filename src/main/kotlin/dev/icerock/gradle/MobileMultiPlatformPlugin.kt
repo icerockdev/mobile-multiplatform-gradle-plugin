@@ -10,14 +10,16 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Sync
+import org.gradle.internal.io.LineBufferingOutputStream
+import org.gradle.internal.io.TextStream
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.OutputStream
 
 
 class MobileMultiPlatformPlugin : Plugin<Project> {
@@ -189,6 +191,7 @@ linkerOpts = -framework ${pod.module}
         val podsProjectPath = podsProject.absolutePath
 
         val podBuildDir = outputDir.absolutePath
+        val derivedData = File(outputDir, "DerivedData").absolutePath
         val podCmd = "SYMROOT=$podBuildDir"
         val cmdLine = arrayOf(
             "xcodebuild",
@@ -196,20 +199,47 @@ linkerOpts = -framework ${pod.module}
             "-scheme", scheme,
             "-sdk", arch.first,
             "-arch", arch.second,
+            "-derivedDataPath", derivedData,
             podCmd,
             "build"
         )
         cmdLine.joinToString(separator = " ").also {
-            project.logger.log(LogLevel.DEBUG, "cocoapod build cmd: $it")
+            project.logger.log(LogLevel.LIFECYCLE, "cocoapod build cmd: $it")
         }
 
-        val out = ByteArrayOutputStream()
+        val errOut = LineBufferingOutputStream(
+            object : TextStream {
+                override fun endOfStream(failure: Throwable?) {
+                    if (failure != null) {
+                        project.logger.log(LogLevel.ERROR, failure.message, failure)
+                    }
+                }
+
+                override fun text(text: String) {
+                    project.logger.log(LogLevel.ERROR, text)
+                }
+            }
+        )
+        val stdOut = LineBufferingOutputStream(
+            object : TextStream {
+                override fun endOfStream(failure: Throwable?) {
+                    if (failure != null) {
+                        project.logger.log(LogLevel.ERROR, failure.message, failure)
+                    }
+                }
+
+                override fun text(text: String) {
+                    project.logger.log(LogLevel.INFO, text)
+                }
+            }
+        )
         val result = project.exec {
             workingDir = podsProject
             commandLine = cmdLine.toList()
-            standardOutput = out
+            standardOutput = stdOut
+            errorOutput = errOut
         }
-        project.logger.log(LogLevel.DEBUG, out.toString("UTF-8"))
+        project.logger.log(LogLevel.LIFECYCLE, "xcodebuild result is ${result.exitValue}")
         result.assertNormalExitValue()
     }
 }
