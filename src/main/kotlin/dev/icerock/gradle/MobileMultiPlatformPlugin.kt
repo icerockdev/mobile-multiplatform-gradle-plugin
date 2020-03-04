@@ -156,7 +156,7 @@ linkerOpts = -framework ${pod.module}
                 )
             }
         }
-        val frameworksDir = File(cocoapodsOutputDir, "Debug-${arch.first}/${pod.scheme}")
+        val frameworksDir = File(cocoapodsOutputDir, "UninstalledProducts/${arch.first}")
         return buildTask to frameworksDir
     }
 
@@ -192,7 +192,6 @@ linkerOpts = -framework ${pod.module}
 
         val podBuildDir = outputDir.absolutePath
         val derivedData = File(outputDir, "DerivedData").absolutePath
-        val podCmd = "SYMROOT=$podBuildDir"
         val cmdLine = arrayOf(
             "xcodebuild",
             "-project", podsProjectPath,
@@ -200,7 +199,9 @@ linkerOpts = -framework ${pod.module}
             "-sdk", arch.first,
             "-arch", arch.second,
             "-derivedDataPath", derivedData,
-            podCmd,
+            "SYMROOT=$podBuildDir",
+            "DEPLOYMENT_LOCATION=YES",
+            "SKIP_INSTALL=YES",
             "build"
         )
         cmdLine.joinToString(separator = " ").also {
