@@ -6,13 +6,13 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 fun Project.setupFramework(
-    exports: List<KotlinNativeExportable>
+    exports: List<KotlinNativeExportable>,
+    name: String = "MultiPlatformLibrary"
 ) {
-
     extensions.findByType(KotlinMultiplatformExtension::class.java)?.run {
         ios {
             binaries {
-                framework("MultiPlatformLibrary") {
+                framework(name) {
                     freeCompilerArgs += "-Xobjc-generics"
 
                     exports.forEach { it.export(project, this) }
