@@ -14,8 +14,8 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    compileOnly("com.android.tools.build:gradle:3.5.3")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61")
+    compileOnly("com.android.tools.build:gradle:3.6.1")
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.70")
 }
 
 kotlinDslPluginOptions {
