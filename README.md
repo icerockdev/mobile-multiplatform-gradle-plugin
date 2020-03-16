@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.6.0")
+    implementation("dev.icerock:mobile-multiplatform:0.6.1")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.70")
     implementation("com.android.tools.build:gradle:3.6.1")
 }
@@ -74,6 +74,7 @@ mokoTime will be exported to framework header.
 ```kotlin
 cocoaPods {
     podsProject = file("../ios-app/Pods/Pods.xcodeproj") // here should be path to your Pods project
+    buildConfiguration = "dev-debug" // optional, default is "debug"
 
     pod("MBProgressHUD") // create cInterop and link with CocoaPod where schema and module is same
     pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat") // create cInterop and link with CocoaPod where schema and module is different
