@@ -56,7 +56,8 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                         kotlinMultiplatformExtension = kmpExt,
                         project = this,
                         podsProject = cocoapodsConfig.podsProject,
-                        pod = pod
+                        pod = pod,
+                        configuration = cocoapodsConfig.buildConfiguration
                     )
                 }
             }
@@ -81,7 +82,8 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         kotlinMultiplatformExtension: KotlinMultiplatformExtension,
         project: Project,
         pod: CocoaPodInfo,
-        podsProject: File
+        podsProject: File,
+        configuration: String
     ) {
         kotlinMultiplatformExtension.targets
             .filterIsInstance<KotlinNativeTarget>()
@@ -90,7 +92,8 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                     kotlinNativeTarget = target,
                     pod = pod,
                     podsProject = podsProject,
-                    project = project
+                    project = project,
+                    configuration = configuration
                 )
 
                 val frameworks = target.binaries.filterIsInstance<Framework>()
@@ -131,7 +134,8 @@ linkerOpts = -framework ${pod.module}
         kotlinNativeTarget: KotlinNativeTarget,
         pod: CocoaPodInfo,
         podsProject: File,
-        project: Project
+        project: Project,
+        configuration: String
     ): Pair<Task, File> {
         val arch = when (kotlinNativeTarget.konanTarget) {
             KonanTarget.IOS_ARM64 -> "iphoneos" to "arm64"
@@ -152,7 +156,8 @@ linkerOpts = -framework ${pod.module}
                     project = project,
                     scheme = pod.scheme,
                     arch = arch,
-                    outputDir = cocoapodsOutputDir
+                    outputDir = cocoapodsOutputDir,
+                    configuration = configuration
                 )
             }
         }
@@ -186,7 +191,8 @@ linkerOpts = -framework ${pod.module}
         project: Project,
         scheme: String,
         outputDir: File,
-        arch: Pair<String, String>
+        arch: Pair<String, String>,
+        configuration: String
     ) {
         val podsProjectPath = podsProject.absolutePath
 
@@ -198,6 +204,7 @@ linkerOpts = -framework ${pod.module}
             "-scheme", scheme,
             "-sdk", arch.first,
             "-arch", arch.second,
+            "-configuration", configuration,
             "-derivedDataPath", derivedData,
             "SYMROOT=$podBuildDir",
             "DEPLOYMENT_LOCATION=YES",

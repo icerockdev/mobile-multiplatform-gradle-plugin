@@ -8,6 +8,7 @@ import java.io.File
 
 open class CocoapodsConfig {
     lateinit var podsProject: File
+    var buildConfiguration: String = "debug"
 
     private val _dependencies = mutableListOf<CocoaPodInfo>()
     val dependencies: List<CocoaPodInfo> = _dependencies
