@@ -30,33 +30,35 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         if (androidLibraryExtension != null) setupAndroidLibrary(androidLibraryExtension)
         if (kmpExtension != null) setupMobileTargets(kmpExtension)
 
-        target.afterEvaluate {
-            if (kmpExtension != null) {
-                cocoaPodsExtension.dependencies.forEach { pod ->
-                    configureCocoaPod(
-                        kotlinMultiplatformExtension = kmpExtension,
-                        project = this,
-                        podsProject = cocoaPodsExtension.podsProject,
-                        pod = pod,
-                        configuration = cocoaPodsExtension.buildConfiguration
-                    )
-                }
+        if (kmpExtension != null) {
+            cocoaPodsExtension.dependencies.forEach { pod ->
+                configureCocoaPod(
+                    kotlinMultiplatformExtension = kmpExtension,
+                    project = target,
+                    podsProject = cocoaPodsExtension.podsProject,
+                    pod = pod,
+                    configuration = cocoaPodsExtension.buildConfiguration
+                )
             }
-
-            tasks.mapNotNull { it as? KotlinNativeLink }
-                .mapNotNull { it.binary as? Framework }
-                .forEach { framework ->
-                    val linkTask = framework.linkTask
-                    val syncTaskName = linkTask.name.replaceFirst("link", "sync")
-                    val syncFramework = tasks.create(syncTaskName, Sync::class.java) {
-                        group = "cocoapods"
-
-                        from(framework.outputDirectory)
-                        into(file("build/cocoapods/framework"))
-                    }
-                    syncFramework.dependsOn(linkTask)
-                }
         }
+
+        target.tasks
+            .matching {
+                val link = (it as? KotlinNativeLink)
+                val binary = link?.binary
+                binary is Framework
+            }.all {
+                val linkTask = this as KotlinNativeLink
+                val framework = linkTask.binary as Framework
+                val syncTaskName = linkTask.name.replaceFirst("link", "sync")
+                val syncFramework = target.tasks.create(syncTaskName, Sync::class.java) {
+                    group = "cocoapods"
+
+                    from(framework.outputDirectory)
+                    into(target.file("build/cocoapods/framework"))
+                }
+                syncFramework.dependsOn(linkTask)
+            }
     }
 
     private fun setupAndroidLibrary(libraryExtension: LibraryExtension) {
@@ -93,8 +95,9 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         configuration: String
     ) {
         kotlinMultiplatformExtension.targets
-            .filterIsInstance<KotlinNativeTarget>()
-            .forEach { target ->
+            .matching { it is KotlinNativeTarget }
+            .all {
+                val target = this as KotlinNativeTarget
                 val (buildTask, frameworksDir) = configurePodCompilation(
                     kotlinNativeTarget = target,
                     pod = pod,
@@ -103,16 +106,18 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                     configuration = configuration
                 )
 
-                val frameworks = target.binaries.filterIsInstance<Framework>()
+                val frameworks = target.binaries
+                    .matching { it is Framework }
 
-                frameworks.forEach { it.linkerOpts("-F${frameworksDir.absolutePath}") }
+                frameworks.all {
+                    val framework = this as Framework
+                    framework.linkerOpts("-F${frameworksDir.absolutePath}")
+                }
 
                 if (pod.onlyLink) {
                     project.logger.log(LogLevel.WARN, "CocoaPod ${pod.module} integrated only in link $target stage")
-                    frameworks
-                        .map { it.linkTask }
-                        .forEach { it.dependsOn(buildTask) }
-                    return@forEach
+                    frameworks.all { linkTask.dependsOn(buildTask) }
+                    return@all
                 }
 
                 val defFile = File(project.buildDir, "cocoapods/def/${pod.module}.def")
