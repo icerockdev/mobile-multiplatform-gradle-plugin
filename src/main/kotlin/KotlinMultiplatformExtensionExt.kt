@@ -4,24 +4,20 @@
 
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 fun Project.setupFramework(
     exports: List<KotlinNativeExportable>,
     name: String = "MultiPlatformLibrary"
 ) {
-    val configureIos: KotlinNativeTarget.() -> Unit = {
-        binaries {
-            framework(name) {
-                freeCompilerArgs += "-Xobjc-generics"
+    extensions.findByType(KotlinMultiplatformExtension::class.java)?.run {
+        ios {
+            binaries {
+                framework(name) {
+                    freeCompilerArgs += "-Xobjc-generics"
 
-                exports.forEach { it.export(project, this) }
+                    exports.forEach { it.export(project, this) }
+                }
             }
         }
-    }
-
-    extensions.findByType(KotlinMultiplatformExtension::class.java)?.run {
-        iosArm64("iosArm64", configureIos)
-        iosX64("iosX64", configureIos)
     }
 }
