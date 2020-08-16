@@ -19,45 +19,26 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
-import java.io.OutputStream
 
 
 class MobileMultiPlatformPlugin : Plugin<Project> {
     override fun apply(target: Project) {
-        target.extensions.findByType(LibraryExtension::class.java)?.sourceSets {
-            mapOf(
-                "main" to "src/androidMain",
-                "release" to "src/androidMainRelease",
-                "debug" to "src/androidMainDebug",
-                "test" to "src/androidUnitTest",
-                "testRelease" to "src/androidUnitTestRelease",
-                "testDebug" to "src/androidUnitTestDebug"
-            ).forEach { (name, root) ->
-                getByName(name).run {
-                    setRoot(root)
-                }
-            }
-        }
+        val androidLibraryExtension = target.extensions.findByType(LibraryExtension::class.java)
+        val kmpExtension = target.extensions.findByType(KotlinMultiplatformExtension::class.java)
+        val cocoaPodsExtension = target.extensions.create("cocoaPods", CocoapodsConfig::class.java)
 
-        val kmpExt = target.extensions.findByType(KotlinMultiplatformExtension::class.java)?.apply {
-            iosArm64()
-            iosX64()
-            android {
-                publishLibraryVariants("release", "debug")
-            }
-        }
-
-        val cocoapodsConfig = target.extensions.create("cocoaPods", CocoapodsConfig::class.java)
+        if (androidLibraryExtension != null) setupAndroidLibrary(androidLibraryExtension)
+        if (kmpExtension != null) setupMobileTargets(kmpExtension)
 
         target.afterEvaluate {
-            if (kmpExt != null) {
-                cocoapodsConfig.dependencies.forEach { pod ->
+            if (kmpExtension != null) {
+                cocoaPodsExtension.dependencies.forEach { pod ->
                     configureCocoaPod(
-                        kotlinMultiplatformExtension = kmpExt,
+                        kotlinMultiplatformExtension = kmpExtension,
                         project = this,
-                        podsProject = cocoapodsConfig.podsProject,
+                        podsProject = cocoaPodsExtension.podsProject,
                         pod = pod,
-                        configuration = cocoapodsConfig.buildConfiguration
+                        configuration = cocoaPodsExtension.buildConfiguration
                     )
                 }
             }
@@ -75,6 +56,32 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                     }
                     syncFramework.dependsOn(linkTask)
                 }
+        }
+    }
+
+    private fun setupAndroidLibrary(libraryExtension: LibraryExtension) {
+        libraryExtension.sourceSets {
+            mapOf(
+                "main" to "src/androidMain",
+                "release" to "src/androidMainRelease",
+                "debug" to "src/androidMainDebug",
+                "test" to "src/androidUnitTest",
+                "testRelease" to "src/androidUnitTestRelease",
+                "testDebug" to "src/androidUnitTestDebug"
+            ).forEach { (name, root) ->
+                getByName(name).run {
+                    setRoot(root)
+                }
+            }
+        }
+    }
+
+    private fun setupMobileTargets(kmpExtension: KotlinMultiplatformExtension) {
+        kmpExtension.apply {
+            android {
+                publishLibraryVariants("release", "debug")
+            }
+            ios()
         }
     }
 
