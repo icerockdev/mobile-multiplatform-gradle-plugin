@@ -4,9 +4,6 @@
 
 package dev.icerock.gradle
 
-import KotlinNativeExportable
-
 open class FrameworkConfig {
-    var exports: List<KotlinNativeExportable>? = null
     var name: String = "MultiPlatformLibrary"
 }

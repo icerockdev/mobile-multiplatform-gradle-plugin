@@ -6,6 +6,7 @@ package dev.icerock.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.logging.LogLevel
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 class IosFrameworkPlugin : Plugin<Project> {
@@ -16,9 +17,21 @@ class IosFrameworkPlugin : Plugin<Project> {
         kmpExtension.ios {
             binaries {
                 framework(frameworkExtension.name) {
-                    freeCompilerArgs += "-Xobjc-generics"
+                    val framework = this
+                    target.configurations.matching {
+                        it.name.endsWith("api", ignoreCase = true) &&
+                                framework.compilation.relatedConfigurationNames.contains(it.name)
+                    }.all {
+                        val configuration = this
 
-                    frameworkExtension.exports?.forEach { it.export(project, this) }
+                        allDependencies.matching {
+                            it.name.startsWith("kotlin-stdlib").not()
+                        }.all {
+                            val dependency = this
+                            target.logger.log(LogLevel.INFO, "export ${dependency.name} from $configuration")
+                            framework.export(dependency)
+                        }
+                    }
                 }
             }
         }
