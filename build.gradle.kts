@@ -33,13 +33,9 @@ publishing {
         }
     }
 
-    publications {
-        register("plugin", MavenPublication::class) {
-            groupId = "dev.icerock"
-            artifactId = "mobile-multiplatform"
-            version = "0.6.1"
-
-            from(components["java"])
-        }
+    publications.withType<MavenPublication>().configureEach {
+        groupId = "dev.icerock"
+        artifactId = "mobile-multiplatform"
+        version = "0.7.0"
     }
 }
