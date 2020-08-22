@@ -42,23 +42,21 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
             }
         }
 
-        target.tasks
-            .matching {
-                val link = (it as? KotlinNativeLink)
-                val binary = link?.binary
-                binary is Framework
-            }.all {
-                val linkTask = this as KotlinNativeLink
-                val framework = linkTask.binary as Framework
-                val syncTaskName = linkTask.name.replaceFirst("link", "sync")
-                val syncFramework = target.tasks.create(syncTaskName, Sync::class.java) {
-                    group = "cocoapods"
+        target.afterEvaluate {
+            tasks.mapNotNull { it as? KotlinNativeLink }
+                .mapNotNull { it.binary as? Framework }
+                .forEach { framework ->
+                    val linkTask = framework.linkTask
+                    val syncTaskName = linkTask.name.replaceFirst("link", "sync")
+                    val syncFramework = tasks.create(syncTaskName, Sync::class.java) {
+                        group = "cocoapods"
 
-                    from(framework.outputDirectory)
-                    into(target.file("build/cocoapods/framework"))
+                        from(framework.outputDirectory)
+                        into(file("build/cocoapods/framework"))
+                    }
+                    syncFramework.dependsOn(linkTask)
                 }
-                syncFramework.dependsOn(linkTask)
-            }
+        }
     }
 
     private fun setupAndroidLibrary(libraryExtension: LibraryExtension) {
