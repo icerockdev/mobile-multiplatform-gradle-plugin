@@ -40,22 +40,26 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                     configuration = cocoaPodsExtension.buildConfiguration
                 )
             }
-        }
 
-        target.afterEvaluate {
-            tasks.mapNotNull { it as? KotlinNativeLink }
-                .mapNotNull { it.binary as? Framework }
-                .forEach { framework ->
-                    val linkTask = framework.linkTask
-                    val syncTaskName = linkTask.name.replaceFirst("link", "sync")
-                    val syncFramework = tasks.create(syncTaskName, Sync::class.java) {
-                        group = "cocoapods"
+            kmpExtension.targets.configureEach {
+                if(this !is KotlinNativeTarget) return@configureEach
 
-                        from(framework.outputDirectory)
-                        into(file("build/cocoapods/framework"))
+                this.binaries.configureEach {
+                    if(this is Framework) {
+                        val framework = this as Framework
+                        val linkTask = framework.linkTask
+                        val syncTaskName = linkTask.name.replaceFirst("link", "sync")
+
+                        val syncFramework = target.tasks.create(syncTaskName, Sync::class.java) {
+                            group = "cocoapods"
+
+                            from(framework.outputDirectory)
+                            into(target.file("build/cocoapods/framework"))
+                        }
+                        syncFramework.dependsOn(linkTask)
                     }
-                    syncFramework.dependsOn(linkTask)
                 }
+            }
         }
     }
 
