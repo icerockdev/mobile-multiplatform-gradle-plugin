@@ -40,3 +40,12 @@ fun DependencyHandlerScope.mppLibrary(library: MultiPlatformLibrary) {
     library.iosX64?.let { "iosX64MainImplementation"(it) }
     library.iosArm64?.let { "iosArm64MainImplementation"(it) }
 }
+
+fun DependencyHandlerScope.mppTestLibrary(
+    library: MultiPlatformLibrary
+) {
+    "commonTestImplementation"(library.common)
+    library.android?.let { "androidTestImplementation"(it) }
+    library.iosX64?.let { "iosX64TestImplementation"(it) }
+    library.iosArm64?.let { "iosArm64TestImplementation"(it) }
+}
