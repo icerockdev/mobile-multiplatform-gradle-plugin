@@ -17,12 +17,6 @@ fun DependencyHandlerScope.plugin(gradlePlugin: GradlePlugin): Dependency? {
     return gradlePlugin.module?.let { "classpath"(it) }
 }
 
-fun DependencyHandlerScope.plugins(gradlePluginList: List<GradlePlugin>) {
-    gradlePluginList
-        .distinctBy { it.module }
-        .forEach { plugin(it) }
-}
-
 fun PluginDependenciesSpec.plugin(gradlePlugin: GradlePlugin): PluginDependencySpec {
     val spec = id(gradlePlugin.id)
     gradlePlugin.version?.also { spec.version(it) }
