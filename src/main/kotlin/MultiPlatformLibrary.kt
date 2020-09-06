@@ -9,13 +9,13 @@ import org.jetbrains.kotlin.konan.target.Architecture
 
 data class MultiPlatformLibrary(
     val android: String? = null,
-    val common: String? = null,
+    val common: String,
     val iosX64: String? = null,
     val iosArm64: String? = null
 ) : KotlinNativeExportable {
     constructor(
         android: String? = null,
-        common: String? = null,
+        common: String,
         ios: String? = null
     ) : this(
         android = android,
@@ -35,8 +35,17 @@ data class MultiPlatformLibrary(
 }
 
 fun DependencyHandlerScope.mppLibrary(library: MultiPlatformLibrary) {
-    library.android?.let { "androidMainImplementation"(it) }
-    library.common?.let { "commonMainApi"(it) }
-    library.iosX64?.let { "iosX64MainImplementation"(it) }
-    library.iosArm64?.let { "iosArm64MainImplementation"(it) }
+    library.android?.let { "androidMainApi"(it) }
+    "commonMainApi"(library.common)
+    library.iosArm64?.let { "iosArm64MainApi"(it) }
+    library.iosX64?.let { "iosX64MainApi"(it) }
+}
+
+fun DependencyHandlerScope.mppTestLibrary(
+    library: MultiPlatformLibrary
+) {
+    library.android?.let { "androidTestApi"(it) }
+    "commonTestApi"(library.common)
+    library.iosArm64?.let { "iosArm64TestApi"(it) }
+    library.iosX64?.let { "iosX64TestApi"(it) }
 }

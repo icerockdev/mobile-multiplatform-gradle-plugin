@@ -9,3 +9,7 @@ data class AndroidLibrary(val name: String)
 fun DependencyHandlerScope.androidLibrary(androidLibrary: AndroidLibrary) {
     "androidMainImplementation"(androidLibrary.name)
 }
+
+fun DependencyHandlerScope.androidTestLibrary(androidLibrary: AndroidLibrary) {
+    "androidTestImplementation"(androidLibrary.name)
+}

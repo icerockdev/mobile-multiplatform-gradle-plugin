@@ -7,6 +7,9 @@ plugins {
     `maven-publish`
 }
 
+group = "dev.icerock"
+version = "0.7.0"
+
 repositories {
     jcenter()
     google()
@@ -14,8 +17,9 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    compileOnly("com.android.tools.build:gradle:3.6.1")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.70")
+    compileOnly("com.android.tools.build:gradle:4.0.1")
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0")
+    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.0")
 }
 
 kotlinDslPluginOptions {
@@ -29,16 +33,6 @@ publishing {
         credentials {
             username = System.getProperty("BINTRAY_USER")
             password = System.getProperty("BINTRAY_KEY")
-        }
-    }
-
-    publications {
-        register("plugin", MavenPublication::class) {
-            groupId = "dev.icerock"
-            artifactId = "mobile-multiplatform"
-            version = "0.6.1"
-
-            from(components["java"])
         }
     }
 }

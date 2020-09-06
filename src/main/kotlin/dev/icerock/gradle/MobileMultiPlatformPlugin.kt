@@ -8,7 +8,6 @@ import com.android.build.gradle.LibraryExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Sync
 import org.gradle.internal.io.LineBufferingOutputStream
 import org.gradle.internal.io.TextStream
@@ -16,15 +15,87 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
-import java.io.OutputStream
 
 
 class MobileMultiPlatformPlugin : Plugin<Project> {
     override fun apply(target: Project) {
-        target.extensions.findByType(LibraryExtension::class.java)?.sourceSets {
+        val cocoaPodsExtension = target.extensions.create("cocoaPods", CocoapodsConfig::class.java)
+
+        target.plugins.withId("com.android.library") {
+            val androidLibraryExtension =
+                target.extensions.findByType(LibraryExtension::class.java)!!
+
+            setupAndroidLibrary(androidLibraryExtension)
+        }
+
+        target.plugins.withId("org.jetbrains.kotlin.multiplatform") {
+            val kmpExtension =
+                target.extensions.findByType(KotlinMultiplatformExtension::class.java)!!
+
+            setupMobileTargets(kmpExtension, target)
+
+            kmpExtension.targets
+                .matching { it is KotlinNativeTarget }
+                .configureEach {
+                    this as KotlinNativeTarget
+
+                    configureCocoaPodsDependencies(
+                        cocoaPodsExtension = cocoaPodsExtension,
+                        kotlinNativeTarget = this,
+                        target = target
+                    )
+                    configureSyncFrameworkTasks(
+                        kotlinNativeTarget = this,
+                        project = target
+                    )
+                }
+        }
+    }
+
+    private fun configureCocoaPodsDependencies(
+        cocoaPodsExtension: CocoapodsConfig,
+        kotlinNativeTarget: KotlinNativeTarget,
+        target: Project
+    ) {
+        cocoaPodsExtension.dependencies.configureEach {
+            val pod = this
+            pod.onConfigured = {
+                configureCocoaPod(
+                    target = kotlinNativeTarget,
+                    project = target,
+                    pod = pod,
+                    cocoaPodsExtension = cocoaPodsExtension
+                )
+            }
+        }
+    }
+
+    private fun configureSyncFrameworkTasks(
+        kotlinNativeTarget: KotlinNativeTarget,
+        project: Project
+    ) {
+        kotlinNativeTarget.binaries
+            .matching { it is Framework }
+            .configureEach {
+                val framework = this as Framework
+                val linkTask = framework.linkTask
+                val syncTaskName = linkTask.name.replaceFirst("link", "sync")
+
+                val syncFramework =
+                    project.tasks.create(syncTaskName, Sync::class.java) {
+                        group = "cocoapods"
+
+                        from(framework.outputDirectory)
+                        into(project.file("build/cocoapods/framework"))
+                    }
+                syncFramework.dependsOn(linkTask)
+            }
+    }
+
+    private fun setupAndroidLibrary(libraryExtension: LibraryExtension) {
+        libraryExtension.sourceSets {
             mapOf(
                 "main" to "src/androidMain",
                 "release" to "src/androidMainRelease",
@@ -38,105 +109,87 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                 }
             }
         }
+    }
 
-        val kmpExt = target.extensions.findByType(KotlinMultiplatformExtension::class.java)?.apply {
-            iosArm64()
-            iosX64()
+    private fun setupMobileTargets(
+        kmpExtension: KotlinMultiplatformExtension,
+        project: Project
+    ) {
+        kmpExtension.apply {
             android {
                 publishLibraryVariants("release", "debug")
             }
-        }
-
-        val cocoapodsConfig = target.extensions.create("cocoaPods", CocoapodsConfig::class.java)
-
-        target.afterEvaluate {
-            if (kmpExt != null) {
-                cocoapodsConfig.dependencies.forEach { pod ->
-                    configureCocoaPod(
-                        kotlinMultiplatformExtension = kmpExt,
-                        project = this,
-                        podsProject = cocoapodsConfig.podsProject,
-                        pod = pod,
-                        configuration = cocoapodsConfig.buildConfiguration
-                    )
-                }
+            val useShortcutStr = project.findProperty("mobile.multiplatform.useIosShortcut") as? String
+            val useShortcut = useShortcutStr?.toLowerCase() != "false"
+            if(useShortcut) {
+                project.logger.warn("used new ios() shortcut target")
+                ios()
+            } else {
+                project.logger.warn("used old iosArm64() and iosX64() targets")
+                iosArm64()
+                iosX64()
             }
-
-            tasks.mapNotNull { it as? KotlinNativeLink }
-                .mapNotNull { it.binary as? Framework }
-                .forEach { framework ->
-                    val linkTask = framework.linkTask
-                    val syncTaskName = linkTask.name.replaceFirst("link", "sync")
-                    val syncFramework = tasks.create(syncTaskName, Sync::class.java) {
-                        group = "cocoapods"
-
-                        from(framework.outputDirectory)
-                        into(file("build/cocoapods/framework"))
-                    }
-                    syncFramework.dependsOn(linkTask)
-                }
         }
     }
 
     private fun configureCocoaPod(
-        kotlinMultiplatformExtension: KotlinMultiplatformExtension,
+        target: KotlinNativeTarget,
         project: Project,
         pod: CocoaPodInfo,
-        podsProject: File,
-        configuration: String
+        cocoaPodsExtension: CocoapodsConfig
     ) {
-        kotlinMultiplatformExtension.targets
-            .filterIsInstance<KotlinNativeTarget>()
-            .forEach { target ->
-                val (buildTask, frameworksDir) = configurePodCompilation(
-                    kotlinNativeTarget = target,
-                    pod = pod,
-                    podsProject = podsProject,
-                    project = project,
-                    configuration = configuration
-                )
+        project.logger.debug("configure cocoaPod $pod in $target of $project")
 
-                val frameworks = target.binaries.filterIsInstance<Framework>()
+        val (buildTask, frameworksDir) = configurePodCompilation(
+            kotlinNativeTarget = target,
+            pod = pod,
+            project = project,
+            cocoaPodsExtension = cocoaPodsExtension
+        )
 
-                frameworks.forEach { it.linkerOpts("-F${frameworksDir.absolutePath}") }
+        val frameworks = target.binaries
+            .matching { it is Framework }
 
-                if (pod.onlyLink) {
-                    project.logger.log(LogLevel.WARN, "CocoaPod ${pod.module} integrated only in link $target stage")
-                    frameworks
-                        .map { it.linkTask }
-                        .forEach { it.dependsOn(buildTask) }
-                    return@forEach
-                }
+        frameworks.all {
+            val framework = this as Framework
+            framework.linkerOpts("-F${frameworksDir.absolutePath}")
+        }
 
-                val defFile = File(project.buildDir, "cocoapods/def/${pod.module}.def")
-                defFile.parentFile.mkdirs()
-                defFile.writeText(
-                    """
+        if (pod.onlyLink) {
+            project.logger.warn("CocoaPod ${pod.module} integrated only in link $target stage")
+            frameworks.all { linkTask.dependsOn(buildTask) }
+            return
+        }
+
+        val defFile = File(project.buildDir, "cocoapods/def/${pod.module}.def")
+        defFile.parentFile.mkdirs()
+        defFile.writeText(
+            """
 language = Objective-C
 package = cocoapods.${pod.module}
 modules = ${pod.module}
 linkerOpts = -framework ${pod.module} 
                     """.trimIndent()
-                )
+        )
 
-                configureCInterop(
-                    kotlinNativeTarget = target,
-                    defFile = defFile,
-                    frameworksDir = frameworksDir,
-                    pod = pod,
-                    project = project,
-                    buildPodTask = buildTask
-                )
-            }
+        configureCInterop(
+            kotlinNativeTarget = target,
+            defFile = defFile,
+            frameworksDir = frameworksDir,
+            pod = pod,
+            project = project,
+            buildPodTask = buildTask
+        )
     }
 
     private fun configurePodCompilation(
         kotlinNativeTarget: KotlinNativeTarget,
         pod: CocoaPodInfo,
-        podsProject: File,
         project: Project,
-        configuration: String
+        cocoaPodsExtension: CocoapodsConfig
     ): Pair<Task, File> {
+        project.logger.debug("configure compilation pod $pod in $kotlinNativeTarget of $project")
+
         val arch = when (kotlinNativeTarget.konanTarget) {
             KonanTarget.IOS_ARM64 -> "iphoneos" to "arm64"
             KonanTarget.IOS_X64 -> "iphonesimulator" to "x86_64"
@@ -147,20 +200,21 @@ linkerOpts = -framework ${pod.module}
         val capitalizedSdk = arch.first.capitalize()
         val capitalizedArch = arch.second.capitalize()
 
-        val buildTask = project.tasks.create("cocoapodBuild$capitalizedPodName$capitalizedSdk$capitalizedArch") {
-            group = "cocoapods"
+        val buildTask =
+            project.tasks.create("cocoapodBuild$capitalizedPodName$capitalizedSdk$capitalizedArch") {
+                group = "cocoapods"
 
-            doLast {
-                buildPod(
-                    podsProject = podsProject,
-                    project = project,
-                    scheme = pod.scheme,
-                    arch = arch,
-                    outputDir = cocoapodsOutputDir,
-                    configuration = configuration
-                )
+                doLast {
+                    buildPod(
+                        podsProject = cocoaPodsExtension.podsProject,
+                        project = project,
+                        scheme = pod.name,
+                        arch = arch,
+                        outputDir = cocoapodsOutputDir,
+                        configuration = cocoaPodsExtension.buildConfiguration
+                    )
+                }
             }
-        }
         val frameworksDir = File(cocoapodsOutputDir, "UninstalledProducts/${arch.first}")
         return buildTask to frameworksDir
     }
@@ -173,7 +227,10 @@ linkerOpts = -framework ${pod.module}
         project: Project,
         buildPodTask: Task
     ) {
-        val compilation = kotlinNativeTarget.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
+        project.logger.debug("configure cInterop for pod $pod in $kotlinNativeTarget of $project")
+
+        val compilation =
+            kotlinNativeTarget.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
         val capitalizedPodName = pod.capitalizedModule
 
         val cinteropSettings = compilation.cinterops.create("cocoapod$capitalizedPodName") {
@@ -212,19 +269,19 @@ linkerOpts = -framework ${pod.module}
             "build"
         )
         cmdLine.joinToString(separator = " ").also {
-            project.logger.log(LogLevel.LIFECYCLE, "cocoapod build cmd: $it")
+            project.logger.lifecycle("cocoapod build cmd: $it")
         }
 
         val errOut = LineBufferingOutputStream(
             object : TextStream {
                 override fun endOfStream(failure: Throwable?) {
                     if (failure != null) {
-                        project.logger.log(LogLevel.ERROR, failure.message, failure)
+                        project.logger.error(failure.message, failure)
                     }
                 }
 
                 override fun text(text: String) {
-                    project.logger.log(LogLevel.ERROR, text)
+                    project.logger.error(text)
                 }
             }
         )
@@ -232,12 +289,12 @@ linkerOpts = -framework ${pod.module}
             object : TextStream {
                 override fun endOfStream(failure: Throwable?) {
                     if (failure != null) {
-                        project.logger.log(LogLevel.ERROR, failure.message, failure)
+                        project.logger.info(failure.message, failure)
                     }
                 }
 
                 override fun text(text: String) {
-                    project.logger.log(LogLevel.INFO, text)
+                    project.logger.info(text)
                 }
             }
         )
@@ -247,7 +304,7 @@ linkerOpts = -framework ${pod.module}
             standardOutput = stdOut
             errorOutput = errOut
         }
-        project.logger.log(LogLevel.LIFECYCLE, "xcodebuild result is ${result.exitValue}")
+        project.logger.lifecycle("xcodebuild result is ${result.exitValue}")
         result.assertNormalExitValue()
     }
 }

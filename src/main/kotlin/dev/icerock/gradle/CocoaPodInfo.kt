@@ -4,10 +4,27 @@
 
 package dev.icerock.gradle
 
-data class CocoaPodInfo(
-    val scheme: String,
-    val module: String,
-    val onlyLink: Boolean
+open class CocoaPodInfo(
+    val name: String
 ) {
-    val capitalizedModule = module.capitalize()
+    var module: String = name
+    val capitalizedModule get() = module.capitalize()
+
+    var onlyLink: Boolean = false
+
+    private var configured = false
+    internal var onConfigured: () -> Unit = {}
+        set(value) {
+            field = value
+            if (configured) field.invoke()
+        }
+
+    internal fun configured() {
+        configured = true
+        onConfigured.invoke()
+    }
+
+    override fun toString(): String {
+        return "CocoaPodInfo(name = $name, module = $module, onlyLink = $onlyLink)"
+    }
 }

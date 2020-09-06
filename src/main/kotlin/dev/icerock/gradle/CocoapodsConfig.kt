@@ -4,26 +4,28 @@
 
 package dev.icerock.gradle
 
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.model.ObjectFactory
 import java.io.File
+import javax.inject.Inject
 
-open class CocoapodsConfig {
+
+open class CocoapodsConfig @Inject constructor(objectFactory: ObjectFactory) {
     lateinit var podsProject: File
     var buildConfiguration: String = "debug"
 
-    private val _dependencies = mutableListOf<CocoaPodInfo>()
-    val dependencies: List<CocoaPodInfo> = _dependencies
+    val dependencies: NamedDomainObjectContainer<CocoaPodInfo> =
+        objectFactory.domainObjectContainer(CocoaPodInfo::class.java)
 
     fun pod(name: String, onlyLink: Boolean = false) {
         pod(scheme = name, module = name, onlyLink = onlyLink)
     }
 
     fun pod(scheme: String, module: String, onlyLink: Boolean = false) {
-        _dependencies.add(
-            CocoaPodInfo(
-                scheme = scheme,
-                module = module,
-                onlyLink = onlyLink
-            )
-        )
+        val pod = dependencies.create(scheme) {
+            this.module = module
+            this.onlyLink = onlyLink
+        }
+        pod.configured()
     }
 }

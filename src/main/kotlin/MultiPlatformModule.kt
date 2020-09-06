@@ -21,8 +21,5 @@ data class MultiPlatformModule(
 
 fun DependencyHandlerScope.mppModule(module: MultiPlatformModule) {
     val name = module.name
-    "androidMainImplementation"(dependencies.project(path = name))
     "commonMainApi"(dependencies.project(path = name))
-    "iosX64MainImplementation"(dependencies.project(path = name))
-    "iosArm64MainImplementation"(dependencies.project(path = name))
 }
