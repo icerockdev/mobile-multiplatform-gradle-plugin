@@ -35,11 +35,17 @@ data class MultiPlatformLibrary(
 }
 
 fun DependencyHandlerScope.mppLibrary(library: MultiPlatformLibrary) {
+    library.android?.let { "androidMainApi"(it) }
     "commonMainApi"(library.common)
+    library.iosArm64?.let { "iosArm64MainApi"(it) }
+    library.iosX64?.let { "iosX64MainApi"(it) }
 }
 
 fun DependencyHandlerScope.mppTestLibrary(
     library: MultiPlatformLibrary
 ) {
-    "commonTestImplementation"(library.common)
+    library.android?.let { "androidTestApi"(it) }
+    "commonTestApi"(library.common)
+    library.iosArm64?.let { "iosArm64TestApi"(it) }
+    library.iosX64?.let { "iosX64TestApi"(it) }
 }
