@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.3.70-orange)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.0-orange)
 
 # Mobule Multiplatform gradle plugin
 This is a Gradle plugin for simple setup of Kotlin Multiplatform mobile Gradle modules.  
@@ -14,9 +14,9 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.6.1")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.70")
-    implementation("com.android.tools.build:gradle:3.6.1")
+    implementation("dev.icerock:mobile-multiplatform:0.7.0")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0")
+    implementation("com.android.tools.build:gradle:4.0.1")
 }
 ```
 
@@ -30,9 +30,15 @@ plugins {
     id("dev.icerock.mobile.multiplatform")
 }
 ```
-Plugin automatically setup android, iosX64, iosArm64 targets. 
+Plugin automatically setup android, ios targets. 
 For Android setup sourceset path to `androidMain`. 
 For iOS setup `sync` gradle tasks in group `cocoapods` for `cocoapods` integration.
+
+By default used `ios()` targets creation with intermediate source set `iosMain`. To disable it add
+ into `gradle.properties` line:
+```
+mobile.multiplatform.useIosShortcut=false
+```
 
 ### Definition of dependencies
 ```kotlin
@@ -65,9 +71,18 @@ dependencies {
 ### Setup export as iOS framework
 `build.gradle.kts`
 ```kotlin
-setupFramework(exports = listOf(mokoTime))
+plugins {
+    id("dev.icerock.mobile.multiplatform.ios-framework")
+}
+
+// optional for export dependencies into framework header
+framework {
+    export(project = project(":myproject"))
+    export(kotlinNativeExportable = MultiPlatfomLibrary(<...>))
+    export(kotlinNativeExportable = MultiPlatfomModule(<...>))
+    export(arm64Dependency = "my.group:name-iosarm64:0.1.0", x64Dependency = "my.group:name-iosx64:0.1.0")
+}
 ```
-mokoTime will be exported to framework header.
 
 ### Setup CocoaPods interop
 `build.gradle.kts`
