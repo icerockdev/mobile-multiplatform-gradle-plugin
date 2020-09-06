@@ -30,9 +30,15 @@ plugins {
     id("dev.icerock.mobile.multiplatform")
 }
 ```
-Plugin automatically setup android, iosX64, iosArm64 targets. 
+Plugin automatically setup android, ios targets. 
 For Android setup sourceset path to `androidMain`. 
 For iOS setup `sync` gradle tasks in group `cocoapods` for `cocoapods` integration.
+
+By default used `ios()` targets creation with intermediate source set `iosMain`. To disable it add
+ into `gradle.properties` line:
+```
+mobile.multiplatform.useIosShortcut=false
+```
 
 ### Definition of dependencies
 ```kotlin

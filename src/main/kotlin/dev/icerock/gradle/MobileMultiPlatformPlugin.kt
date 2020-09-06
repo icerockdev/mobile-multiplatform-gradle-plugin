@@ -34,7 +34,7 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
             val kmpExtension =
                 target.extensions.findByType(KotlinMultiplatformExtension::class.java)!!
 
-            setupMobileTargets(kmpExtension)
+            setupMobileTargets(kmpExtension, target)
 
             kmpExtension.targets
                 .matching { it is KotlinNativeTarget }
@@ -111,12 +111,24 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         }
     }
 
-    private fun setupMobileTargets(kmpExtension: KotlinMultiplatformExtension) {
+    private fun setupMobileTargets(
+        kmpExtension: KotlinMultiplatformExtension,
+        project: Project
+    ) {
         kmpExtension.apply {
             android {
                 publishLibraryVariants("release", "debug")
             }
-            ios()
+            val useShortcutStr = project.findProperty("mobile.multiplatform.useIosShortcut") as? String
+            val useShortcut = useShortcutStr?.toLowerCase() != "false"
+            if(useShortcut) {
+                project.logger.warn("used new ios() shortcut target")
+                ios()
+            } else {
+                project.logger.warn("used old iosArm64() and iosX64() targets")
+                iosArm64()
+                iosX64()
+            }
         }
     }
 
