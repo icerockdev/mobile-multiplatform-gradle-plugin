@@ -71,9 +71,18 @@ dependencies {
 ### Setup export as iOS framework
 `build.gradle.kts`
 ```kotlin
-setupFramework(exports = listOf(mokoTime))
+plugins {
+    id("dev.icerock.mobile.multiplatform.ios-framework")
+}
+
+// optional for export dependencies into framework header
+framework {
+    export(project = project(":myproject"))
+    export(kotlinNativeExportable = MultiPlatfomLibrary(<...>))
+    export(kotlinNativeExportable = MultiPlatfomModule(<...>))
+    export(arm64Dependency = "my.group:name-iosarm64:0.1.0", x64Dependency = "my.group:name-iosx64:0.1.0")
+}
 ```
-mokoTime will be exported to framework header.
 
 ### Setup CocoaPods interop
 `build.gradle.kts`
