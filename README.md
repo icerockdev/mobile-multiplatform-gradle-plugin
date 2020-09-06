@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.3.60-orange)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.0-orange)
 
 # Mobule Multiplatform gradle plugin
 This is a Gradle plugin for simple setup of Kotlin Multiplatform mobile Gradle modules.  
@@ -14,9 +14,9 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.6.1")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.70")
-    implementation("com.android.tools.build:gradle:3.6.1")
+    implementation("dev.icerock:mobile-multiplatform:0.7.0")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0")
+    implementation("com.android.tools.build:gradle:4.0.1")
 }
 ```
 
