@@ -7,6 +7,9 @@ plugins {
     `maven-publish`
 }
 
+group = "dev.icerock"
+version = "0.7.0"
+
 repositories {
     jcenter()
     google()
@@ -31,11 +34,5 @@ publishing {
             username = System.getProperty("BINTRAY_USER")
             password = System.getProperty("BINTRAY_KEY")
         }
-    }
-
-    publications.withType<MavenPublication>().configureEach {
-        groupId = "dev.icerock"
-        artifactId = "mobile-multiplatform"
-        version = "0.7.0"
     }
 }
