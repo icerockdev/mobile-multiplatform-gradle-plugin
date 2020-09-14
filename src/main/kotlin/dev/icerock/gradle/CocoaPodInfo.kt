@@ -7,22 +7,11 @@ package dev.icerock.gradle
 open class CocoaPodInfo(
     val name: String
 ) {
-    var module: String = name
-    val capitalizedModule get() = module.capitalize()
-
+    var scheme: String = name
     var onlyLink: Boolean = false
 
-    private var configured = false
-    internal var onConfigured: () -> Unit = {}
-        set(value) {
-            field = value
-            if (configured) field.invoke()
-        }
-
-    internal fun configured() {
-        configured = true
-        onConfigured.invoke()
-    }
+    val module: String get() = name
+    val capitalizedModule: String get() = module.capitalize()
 
     override fun toString(): String {
         return "CocoaPodInfo(name = $name, module = $module, onlyLink = $onlyLink)"

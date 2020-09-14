@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "dev.icerock"
-version = "0.7.0"
+version = "0.7.1"
 
 repositories {
     jcenter()
@@ -18,8 +18,8 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     compileOnly("com.android.tools.build:gradle:4.0.1")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0")
-    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.0")
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10")
+    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.10")
 }
 
 kotlinDslPluginOptions {

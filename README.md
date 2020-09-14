@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.0-orange)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.10-orange)
 
 # Mobule Multiplatform gradle plugin
 This is a Gradle plugin for simple setup of Kotlin Multiplatform mobile Gradle modules.  
@@ -14,8 +14,8 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.7.0")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0")
+    implementation("dev.icerock:mobile-multiplatform:0.7.1")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10")
     implementation("com.android.tools.build:gradle:4.0.1")
 }
 ```
@@ -38,6 +38,11 @@ By default used `ios()` targets creation with intermediate source set `iosMain`.
  into `gradle.properties` line:
 ```
 mobile.multiplatform.useIosShortcut=false
+```
+
+To disable warning about used ios targets add into `gradle.properties` line:
+```
+mobile.multiplatform.iosTargetWarning=false
 ```
 
 ### Definition of dependencies

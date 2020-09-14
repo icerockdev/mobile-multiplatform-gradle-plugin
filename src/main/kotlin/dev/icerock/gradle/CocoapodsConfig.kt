@@ -14,7 +14,9 @@ open class CocoapodsConfig @Inject constructor(objectFactory: ObjectFactory) {
     lateinit var podsProject: File
     var buildConfiguration: String = "debug"
 
-    val dependencies: NamedDomainObjectContainer<CocoaPodInfo> =
+    val compilationPods: NamedDomainObjectContainer<CocoaPodInfo> =
+        objectFactory.domainObjectContainer(CocoaPodInfo::class.java)
+    val cInteropPods: NamedDomainObjectContainer<CocoaPodInfo> =
         objectFactory.domainObjectContainer(CocoaPodInfo::class.java)
 
     fun pod(name: String, onlyLink: Boolean = false) {
@@ -22,10 +24,9 @@ open class CocoapodsConfig @Inject constructor(objectFactory: ObjectFactory) {
     }
 
     fun pod(scheme: String, module: String, onlyLink: Boolean = false) {
-        val pod = dependencies.create(scheme) {
-            this.module = module
-            this.onlyLink = onlyLink
+        compilationPods.create(module) { this.scheme = scheme }
+        if (!onlyLink) {
+            cInteropPods.create(module) { this.scheme = scheme }
         }
-        pod.configured()
     }
 }
