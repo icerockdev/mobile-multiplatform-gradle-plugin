@@ -5,12 +5,10 @@
 package dev.icerock.gradle
 
 import com.android.build.gradle.LibraryExtension
+import dev.icerock.gradle.tasks.CompileCocoaPod
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.tasks.Sync
-import org.gradle.internal.io.LineBufferingOutputStream
-import org.gradle.internal.io.TextStream
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
@@ -34,7 +32,7 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
             val kmpExtension =
                 target.extensions.findByType(KotlinMultiplatformExtension::class.java)!!
 
-            setupMobileTargets(kmpExtension, target)
+            setupIosTargets(kmpExtension, target)
 
             kmpExtension.targets
                 .matching { it is KotlinNativeTarget }
@@ -59,16 +57,20 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         kotlinNativeTarget: KotlinNativeTarget,
         target: Project
     ) {
-        cocoaPodsExtension.dependencies.configureEach {
-            val pod = this
-            pod.onConfigured = {
-                configureCocoaPod(
-                    target = kotlinNativeTarget,
-                    project = target,
-                    pod = pod,
-                    cocoaPodsExtension = cocoaPodsExtension
-                )
-            }
+        cocoaPodsExtension.compilationPods.configureEach {
+            configureCocoaPod(
+                target = kotlinNativeTarget,
+                project = target,
+                pod = this,
+                cocoaPodsExtension = cocoaPodsExtension
+            )
+        }
+        cocoaPodsExtension.cInteropPods.configureEach {
+            configureCInterop(
+                kotlinNativeTarget = kotlinNativeTarget,
+                pod = this,
+                project = target
+            )
         }
     }
 
@@ -111,21 +113,25 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         }
     }
 
-    private fun setupMobileTargets(
+    private fun setupIosTargets(
         kmpExtension: KotlinMultiplatformExtension,
         project: Project
     ) {
+        val logTargetTypeStr =
+            project.findProperty("mobile.multiplatform.iosTargetWarning") as? String
+        val logTargetType = logTargetTypeStr?.toLowerCase() != "false"
         kmpExtension.apply {
             android {
                 publishLibraryVariants("release", "debug")
             }
-            val useShortcutStr = project.findProperty("mobile.multiplatform.useIosShortcut") as? String
+            val useShortcutStr =
+                project.findProperty("mobile.multiplatform.useIosShortcut") as? String
             val useShortcut = useShortcutStr?.toLowerCase() != "false"
-            if(useShortcut) {
-                project.logger.warn("used new ios() shortcut target")
+            if (useShortcut) {
+                if (logTargetType) project.logger.warn("used new ios() shortcut target")
                 ios()
             } else {
-                project.logger.warn("used old iosArm64() and iosX64() targets")
+                if (logTargetType) project.logger.warn("used old iosArm64() and iosX64() targets")
                 iosArm64()
                 iosX64()
             }
@@ -140,46 +146,22 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
     ) {
         project.logger.debug("configure cocoaPod $pod in $target of $project")
 
-        val (buildTask, frameworksDir) = configurePodCompilation(
+        val buildTask: CompileCocoaPod = configurePodCompilation(
             kotlinNativeTarget = target,
             pod = pod,
             project = project,
             cocoaPodsExtension = cocoaPodsExtension
         )
 
-        val frameworks = target.binaries
+        target.binaries
             .matching { it is Framework }
+            .configureEach {
+                val framework = this as Framework
+                val frameworksDir = buildTask.frameworksDir
+                framework.linkerOpts("-F${frameworksDir.absolutePath}")
 
-        frameworks.all {
-            val framework = this as Framework
-            framework.linkerOpts("-F${frameworksDir.absolutePath}")
-        }
-
-        if (pod.onlyLink) {
-            project.logger.warn("CocoaPod ${pod.module} integrated only in link $target stage")
-            frameworks.all { linkTask.dependsOn(buildTask) }
-            return
-        }
-
-        val defFile = File(project.buildDir, "cocoapods/def/${pod.module}.def")
-        defFile.parentFile.mkdirs()
-        defFile.writeText(
-            """
-language = Objective-C
-package = cocoapods.${pod.module}
-modules = ${pod.module}
-linkerOpts = -framework ${pod.module} 
-                    """.trimIndent()
-        )
-
-        configureCInterop(
-            kotlinNativeTarget = target,
-            defFile = defFile,
-            frameworksDir = frameworksDir,
-            pod = pod,
-            project = project,
-            buildPodTask = buildTask
-        )
+                linkTask.dependsOn(buildTask)
+            }
     }
 
     private fun configurePodCompilation(
@@ -187,124 +169,77 @@ linkerOpts = -framework ${pod.module}
         pod: CocoaPodInfo,
         project: Project,
         cocoaPodsExtension: CocoapodsConfig
-    ): Pair<Task, File> {
+    ): CompileCocoaPod {
         project.logger.debug("configure compilation pod $pod in $kotlinNativeTarget of $project")
 
-        val arch = when (kotlinNativeTarget.konanTarget) {
+        val (sdk, arch) = when (kotlinNativeTarget.konanTarget) {
             KonanTarget.IOS_ARM64 -> "iphoneos" to "arm64"
             KonanTarget.IOS_X64 -> "iphonesimulator" to "x86_64"
             else -> throw IllegalArgumentException("${kotlinNativeTarget.konanTarget} is unsupported")
         }
-        val cocoapodsOutputDir = File(project.buildDir, "cocoapods")
-        val capitalizedPodName = pod.capitalizedModule
-        val capitalizedSdk = arch.first.capitalize()
-        val capitalizedArch = arch.second.capitalize()
+        val taskName = generateCompileCocoaPodTaskName(kotlinNativeTarget, pod)
+        val taskProject = project.rootProject
 
-        val buildTask =
-            project.tasks.create("cocoapodBuild$capitalizedPodName$capitalizedSdk$capitalizedArch") {
-                group = "cocoapods"
-
-                doLast {
-                    buildPod(
-                        podsProject = cocoaPodsExtension.podsProject,
-                        project = project,
-                        scheme = pod.name,
-                        arch = arch,
-                        outputDir = cocoapodsOutputDir,
-                        configuration = cocoaPodsExtension.buildConfiguration
-                    )
-                }
+        val existTask = taskProject.tasks.findByName(taskName)
+        return if (existTask != null) {
+            existTask as CompileCocoaPod
+        } else {
+            project.rootProject.tasks.create(taskName, CompileCocoaPod::class.java) {
+                podInfo = pod
+                compileSdk = sdk
+                compileArch = arch
+                config = cocoaPodsExtension
             }
-        val frameworksDir = File(cocoapodsOutputDir, "UninstalledProducts/${arch.first}")
-        return buildTask to frameworksDir
+        }
+    }
+
+    private fun generateCompileCocoaPodTaskName(
+        kotlinNativeTarget: KotlinNativeTarget,
+        pod: CocoaPodInfo
+    ): String {
+        val (sdk, arch) = when (kotlinNativeTarget.konanTarget) {
+            KonanTarget.IOS_ARM64 -> "iphoneos" to "arm64"
+            KonanTarget.IOS_X64 -> "iphonesimulator" to "x86_64"
+            else -> throw IllegalArgumentException("${kotlinNativeTarget.konanTarget} is unsupported")
+        }
+        val capitalizedPodName = pod.capitalizedModule
+        val capitalizedSdk = sdk.capitalize()
+        val capitalizedArch = arch.capitalize()
+        return "cocoapodBuild$capitalizedPodName$capitalizedSdk$capitalizedArch"
     }
 
     private fun configureCInterop(
         kotlinNativeTarget: KotlinNativeTarget,
-        defFile: File,
-        frameworksDir: File,
         pod: CocoaPodInfo,
-        project: Project,
-        buildPodTask: Task
+        project: Project
     ) {
         project.logger.debug("configure cInterop for pod $pod in $kotlinNativeTarget of $project")
 
-        val compilation =
-            kotlinNativeTarget.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
-        val capitalizedPodName = pod.capitalizedModule
+        val compileName = generateCompileCocoaPodTaskName(kotlinNativeTarget, pod)
+        project.rootProject.tasks.matching { it.name == compileName }.configureEach {
+            val compileCocoaPod = this as CompileCocoaPod
 
-        val cinteropSettings = compilation.cinterops.create("cocoapod$capitalizedPodName") {
-            defFile(defFile)
+            val defFile = File(project.buildDir, "cocoapods/def/${pod.module}.def")
+            defFile.parentFile.mkdirs()
+            defFile.writeText(
+                """
+language = Objective-C
+package = cocoapods.${pod.module}
+modules = ${pod.module}
+linkerOpts = -framework ${pod.module} 
+""".trimIndent()
+            )
+            val frameworksDir: File = compileCocoaPod.frameworksDir
 
-            compilerOpts("-F${frameworksDir.absolutePath}")
-        }
-        val cinteropTask = project.tasks.getByName(cinteropSettings.interopProcessingTaskName)
-
-        cinteropTask.dependsOn(buildPodTask)
-    }
-
-    private fun buildPod(
-        podsProject: File,
-        project: Project,
-        scheme: String,
-        outputDir: File,
-        arch: Pair<String, String>,
-        configuration: String
-    ) {
-        val podsProjectPath = podsProject.absolutePath
-
-        val podBuildDir = outputDir.absolutePath
-        val derivedData = File(outputDir, "DerivedData").absolutePath
-        val cmdLine = arrayOf(
-            "xcodebuild",
-            "-project", podsProjectPath,
-            "-scheme", scheme,
-            "-sdk", arch.first,
-            "-arch", arch.second,
-            "-configuration", configuration,
-            "-derivedDataPath", derivedData,
-            "SYMROOT=$podBuildDir",
-            "DEPLOYMENT_LOCATION=YES",
-            "SKIP_INSTALL=YES",
-            "build"
-        )
-        cmdLine.joinToString(separator = " ").also {
-            project.logger.lifecycle("cocoapod build cmd: $it")
-        }
-
-        val errOut = LineBufferingOutputStream(
-            object : TextStream {
-                override fun endOfStream(failure: Throwable?) {
-                    if (failure != null) {
-                        project.logger.error(failure.message, failure)
-                    }
-                }
-
-                override fun text(text: String) {
-                    project.logger.error(text)
-                }
+            val compilation =
+                kotlinNativeTarget.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
+            val capitalizedPodName = pod.capitalizedModule
+            val cinteropSettings = compilation.cinterops.create("cocoapod$capitalizedPodName") {
+                defFile(defFile)
+                compilerOpts("-F${frameworksDir.absolutePath}")
             }
-        )
-        val stdOut = LineBufferingOutputStream(
-            object : TextStream {
-                override fun endOfStream(failure: Throwable?) {
-                    if (failure != null) {
-                        project.logger.info(failure.message, failure)
-                    }
-                }
-
-                override fun text(text: String) {
-                    project.logger.info(text)
-                }
-            }
-        )
-        val result = project.exec {
-            workingDir = podsProject
-            commandLine = cmdLine.toList()
-            standardOutput = stdOut
-            errorOutput = errOut
+            val cinteropTask = project.tasks.getByName(cinteropSettings.interopProcessingTaskName)
+            cinteropTask.dependsOn(compileCocoaPod)
         }
-        project.logger.lifecycle("xcodebuild result is ${result.exitValue}")
-        result.assertNormalExitValue()
     }
 }
