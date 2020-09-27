@@ -8,6 +8,7 @@ import com.android.build.gradle.LibraryExtension
 import dev.icerock.gradle.tasks.CompileCocoaPod
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.tasks.Sync
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
@@ -20,6 +21,14 @@ import java.io.File
 class MobileMultiPlatformPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         val cocoaPodsExtension = target.extensions.create("cocoaPods", CocoapodsConfig::class.java)
+        if (target.hasProperty(PROPERTY_PODS_PROJECT)) {
+            val path = target.property(PROPERTY_PODS_PROJECT) as String
+            cocoaPodsExtension.podsProject = File(target.rootDir, path)
+        }
+        if (target.hasProperty(PROPERTY_PODS_CONFIGURATION)) {
+            val config = target.property(PROPERTY_PODS_CONFIGURATION) as String
+            cocoaPodsExtension.buildConfiguration = config
+        }
 
         target.plugins.withId("com.android.library") {
             val androidLibraryExtension =
@@ -57,20 +66,31 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         kotlinNativeTarget: KotlinNativeTarget,
         target: Project
     ) {
-        cocoaPodsExtension.compilationPods.configureEach {
-            configureCocoaPod(
-                target = kotlinNativeTarget,
-                project = target,
-                pod = this,
-                cocoaPodsExtension = cocoaPodsExtension
-            )
-        }
-        cocoaPodsExtension.cInteropPods.configureEach {
-            configureCInterop(
-                kotlinNativeTarget = kotlinNativeTarget,
-                pod = this,
-                project = target
-            )
+        cocoaPodsExtension.cocoapods.configureEach {
+            doOnConfigured {
+                if (!precompiled) {
+                    configureCocoaPod(
+                        target = kotlinNativeTarget,
+                        project = target,
+                        pod = this,
+                        cocoaPodsExtension = cocoaPodsExtension
+                    )
+
+                }
+
+                if (!onlyLink) {
+                    configureCInterop(
+                        target = kotlinNativeTarget,
+                        pod = this,
+                        project = target
+                    )
+                } else if (precompiled) {
+                    configurePrecompiledLink(
+                        target = kotlinNativeTarget,
+                        pod = this
+                    )
+                }
+            }
         }
     }
 
@@ -117,15 +137,13 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         kmpExtension: KotlinMultiplatformExtension,
         project: Project
     ) {
-        val logTargetTypeStr =
-            project.findProperty("mobile.multiplatform.iosTargetWarning") as? String
+        val logTargetTypeStr = project.findProperty(PROPERTY_IOS_WARNING) as? String
         val logTargetType = logTargetTypeStr?.toLowerCase() != "false"
         kmpExtension.apply {
             android {
                 publishLibraryVariants("release", "debug")
             }
-            val useShortcutStr =
-                project.findProperty("mobile.multiplatform.useIosShortcut") as? String
+            val useShortcutStr = project.findProperty(PROPERTY_USE_IOS_SHORTCUT) as? String
             val useShortcut = useShortcutStr?.toLowerCase() != "false"
             if (useShortcut) {
                 if (logTargetType) project.logger.warn("used new ios() shortcut target")
@@ -209,37 +227,88 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
     }
 
     private fun configureCInterop(
-        kotlinNativeTarget: KotlinNativeTarget,
+        target: KotlinNativeTarget,
         pod: CocoaPodInfo,
         project: Project
     ) {
-        project.logger.debug("configure cInterop for pod $pod in $kotlinNativeTarget of $project")
+        project.logger.debug("configure cInterop for pod $pod in $target of $project")
 
-        val compileName = generateCompileCocoaPodTaskName(kotlinNativeTarget, pod)
-        project.rootProject.tasks.matching { it.name == compileName }.configureEach {
-            val compileCocoaPod = this as CompileCocoaPod
+        if (pod.precompiled) {
+            createCInteropTask(
+                project = project,
+                kotlinNativeTarget = target,
+                pod = pod,
+                frameworksPaths = pod.frameworksPaths
+            )
+        } else {
+            val compileName = generateCompileCocoaPodTaskName(target, pod)
+            project.rootProject.tasks.matching { it.name == compileName }.configureEach {
+                val compileCocoaPod = this as CompileCocoaPod
+                val cInteropTask = createCInteropTask(
+                    project = project,
+                    kotlinNativeTarget = target,
+                    pod = pod,
+                    frameworksPaths = listOf(compileCocoaPod.frameworksDir)
+                )
+                cInteropTask.dependsOn(compileCocoaPod)
+            }
+        }
+    }
 
-            val defFile = File(project.buildDir, "cocoapods/def/${pod.module}.def")
-            defFile.parentFile.mkdirs()
-            defFile.writeText(
-                """
+    private fun createCInteropTask(
+        project: Project,
+        kotlinNativeTarget: KotlinNativeTarget,
+        pod: CocoaPodInfo,
+        frameworksPaths: List<File>
+    ): Task {
+        val extraModulesLine = pod.extraModules.joinToString(separator = " ")
+        val extraLinkerOptsLine = pod.extraLinkerOpts.joinToString(separator = " ")
+
+        val defFile = File(project.buildDir, "cocoapods/def/${pod.module}.def")
+        defFile.parentFile.mkdirs()
+        defFile.writeText(
+            """
 language = Objective-C
 package = cocoapods.${pod.module}
-modules = ${pod.module}
-linkerOpts = -framework ${pod.module} 
+modules = ${pod.module} $extraModulesLine
+linkerOpts = -framework ${pod.module} $extraLinkerOptsLine
 """.trimIndent()
-            )
-            val frameworksDir: File = compileCocoaPod.frameworksDir
+        )
 
-            val compilation =
-                kotlinNativeTarget.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
-            val capitalizedPodName = pod.capitalizedModule
-            val cinteropSettings = compilation.cinterops.create("cocoapod$capitalizedPodName") {
-                defFile(defFile)
-                compilerOpts("-F${frameworksDir.absolutePath}")
-            }
-            val cinteropTask = project.tasks.getByName(cinteropSettings.interopProcessingTaskName)
-            cinteropTask.dependsOn(compileCocoaPod)
+        val frameworksOpts = frameworksPaths
+            .map { it.absolutePath }
+            .map { "-F$it" }
+        val compilation =
+            kotlinNativeTarget.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
+        val capitalizedPodName = pod.capitalizedModule
+        val cInteropSettings = compilation.cinterops.create("cocoapod$capitalizedPodName") {
+            defFile(defFile)
+            compilerOpts(frameworksOpts)
         }
+        return project.tasks.getByName(cInteropSettings.interopProcessingTaskName)
+    }
+
+    private fun configurePrecompiledLink(
+        target: KotlinNativeTarget,
+        pod: CocoaPodInfo
+    ) {
+        target.binaries
+            .matching { it is Framework }
+            .configureEach {
+                val framework = this as Framework
+
+                val frameworks = pod.frameworksPaths
+                    .map { it.path }
+                    .map { "-F$it" }
+
+                framework.linkerOpts(frameworks)
+            }
+    }
+
+    private companion object {
+        const val PROPERTY_PODS_PROJECT = "mobile.multiplatform.podsProject"
+        const val PROPERTY_PODS_CONFIGURATION = "mobile.multiplatform.podsConfiguration"
+        const val PROPERTY_IOS_WARNING = "mobile.multiplatform.iosTargetWarning"
+        const val PROPERTY_USE_IOS_SHORTCUT = "mobile.multiplatform.useIosShortcut"
     }
 }

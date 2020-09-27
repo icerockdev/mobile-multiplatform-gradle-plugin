@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.7.1")
+    implementation("dev.icerock:mobile-multiplatform:0.8.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10")
     implementation("com.android.tools.build:gradle:4.0.1")
 }
@@ -101,6 +101,13 @@ cocoaPods {
     pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat", onlyLink = true) // not create cInterop - just link framework with this CocoaPod
 }
 ```
+
+Also path to Pods project and configuration can be set globally into `gradle.properties`
+```properties
+mobile.multiplatform.podsProject=ios-app/Pods/Pods.xcodeproj
+mobile.multiplatform.podsConfiguration=dev-debug
+```
+`podsProject` should be relative path from root gradle project.
 
 ## License
         

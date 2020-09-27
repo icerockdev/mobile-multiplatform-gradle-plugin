@@ -14,9 +14,7 @@ open class CocoapodsConfig @Inject constructor(objectFactory: ObjectFactory) {
     lateinit var podsProject: File
     var buildConfiguration: String = "debug"
 
-    val compilationPods: NamedDomainObjectContainer<CocoaPodInfo> =
-        objectFactory.domainObjectContainer(CocoaPodInfo::class.java)
-    val cInteropPods: NamedDomainObjectContainer<CocoaPodInfo> =
+    internal val cocoapods: NamedDomainObjectContainer<CocoaPodInfo> =
         objectFactory.domainObjectContainer(CocoaPodInfo::class.java)
 
     fun pod(name: String, onlyLink: Boolean = false) {
@@ -24,9 +22,30 @@ open class CocoapodsConfig @Inject constructor(objectFactory: ObjectFactory) {
     }
 
     fun pod(scheme: String, module: String, onlyLink: Boolean = false) {
-        compilationPods.create(module) { this.scheme = scheme }
-        if (!onlyLink) {
-            cInteropPods.create(module) { this.scheme = scheme }
+        cocoapods.create(module) {
+            this.scheme = scheme
+            this.onlyLink = onlyLink
+        }.configured()
+    }
+
+    fun precompiledPod(
+        scheme: String,
+        module: String = scheme,
+        extraModules: List<String>? = null,
+        extraLinkerOpts: List<String>? = null,
+        onlyLink: Boolean = false,
+        frameworksPathsResolver: (File) -> List<File>
+    ) {
+        if (!::podsProject.isInitialized) {
+            throw IllegalStateException("podsProject property should be set before call precompiledPod")
         }
+        cocoapods.create(module) {
+            this.scheme = scheme
+            this.precompiled = true
+            this.onlyLink = onlyLink
+            this.frameworksPaths = frameworksPathsResolver(podsProject.parentFile)
+            if (extraModules != null) this.extraModules = extraModules
+            if (extraLinkerOpts != null) this.extraLinkerOpts = extraLinkerOpts
+        }.configured()
     }
 }
