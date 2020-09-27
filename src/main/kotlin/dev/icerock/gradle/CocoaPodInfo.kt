@@ -4,16 +4,37 @@
 
 package dev.icerock.gradle
 
+import java.io.File
+
 open class CocoaPodInfo(
     val name: String
 ) {
     var scheme: String = name
     var onlyLink: Boolean = false
+    var precompiled: Boolean = false
+    var frameworksPaths: List<File> = emptyList()
 
     val module: String get() = name
     val capitalizedModule: String get() = module.capitalize()
+    var extraModules: List<String> = emptyList()
+    var extraLinkerOpts: List<String> = emptyList()
+
+    private val onConfiguredBlocks = mutableListOf<() -> Unit>()
+    private var configured = false
 
     override fun toString(): String {
-        return "CocoaPodInfo(name = $name, module = $module, onlyLink = $onlyLink)"
+        return "CocoaPodInfo(name = $name, module = $module, onlyLink = $onlyLink, " +
+                "precompiled = $precompiled, extraModules = $extraModules, " +
+                "extraLinkerOpts = $extraLinkerOpts)"
+    }
+
+    internal fun configured() {
+        configured = true
+        onConfiguredBlocks.forEach { it.invoke() }
+    }
+
+    internal fun doOnConfigured(block: () -> Unit) {
+        if (configured) block()
+        else onConfiguredBlocks.add(block)
     }
 }
