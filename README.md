@@ -102,6 +102,13 @@ cocoaPods {
 }
 ```
 
+Also path to Pods project and configuration can be set globally into `gradle.properties`
+```properties
+mobile.multiplatform.podsProject=ios-app/Pods/Pods.xcodeproj
+mobile.multiplatform.podsConfiguration=dev-debug
+```
+`podsProject` should be relative path from root gradle project.
+
 ## License
         
     Copyright 2019 IceRock MAG Inc.

@@ -21,6 +21,14 @@ import java.io.File
 class MobileMultiPlatformPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         val cocoaPodsExtension = target.extensions.create("cocoaPods", CocoapodsConfig::class.java)
+        if (target.hasProperty(PROPERTY_PODS_PROJECT)) {
+            val path = target.property(PROPERTY_PODS_PROJECT) as String
+            cocoaPodsExtension.podsProject = File(target.rootDir, path)
+        }
+        if (target.hasProperty(PROPERTY_PODS_CONFIGURATION)) {
+            val config = target.property(PROPERTY_PODS_CONFIGURATION) as String
+            cocoaPodsExtension.buildConfiguration = config
+        }
 
         target.plugins.withId("com.android.library") {
             val androidLibraryExtension =
@@ -298,6 +306,8 @@ linkerOpts = -framework ${pod.module} $extraLinkerOptsLine
     }
 
     private companion object {
+        const val PROPERTY_PODS_PROJECT = "mobile.multiplatform.podsProject"
+        const val PROPERTY_PODS_CONFIGURATION = "mobile.multiplatform.podsConfiguration"
         const val PROPERTY_IOS_WARNING = "mobile.multiplatform.iosTargetWarning"
         const val PROPERTY_USE_IOS_SHORTCUT = "mobile.multiplatform.useIosShortcut"
     }
