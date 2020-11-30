@@ -1,3 +1,4 @@
+![moko-mvvm](https://user-images.githubusercontent.com/5010169/100611874-9aa17f80-3344-11eb-9737-c50ba63b0f6e.png)  
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.10-orange)
 
 # Mobile Multiplatform gradle plugin
