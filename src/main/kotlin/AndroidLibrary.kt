@@ -6,10 +6,14 @@ import org.gradle.kotlin.dsl.DependencyHandlerScope
 
 data class AndroidLibrary(val name: String)
 
+fun DependencyHandlerScope.androidLibrary(configuration: String, androidLibrary: AndroidLibrary) {
+    "android$configuration"(androidLibrary.name)
+}
+
 fun DependencyHandlerScope.androidLibrary(androidLibrary: AndroidLibrary) {
-    "androidMainImplementation"(androidLibrary.name)
+    androidLibrary(configuration = "MainImplementation", androidLibrary = androidLibrary)
 }
 
 fun DependencyHandlerScope.androidTestLibrary(androidLibrary: AndroidLibrary) {
-    "androidTestImplementation"(androidLibrary.name)
+    androidLibrary(configuration = "TestImplementation", androidLibrary = androidLibrary)
 }

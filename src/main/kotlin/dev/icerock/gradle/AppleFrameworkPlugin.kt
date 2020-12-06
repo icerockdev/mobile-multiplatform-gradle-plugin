@@ -34,9 +34,11 @@ open class AppleFrameworkPlugin : Plugin<Project> {
 
     private fun configureFrameworkExports(framework: Framework, frameworkConfig: FrameworkConfig) {
         val project = framework.project
-        frameworkConfig.exports.forEach { exportDeclaration ->
-            project.logger.info("export $exportDeclaration")
-            exportDeclaration.export(project, framework)
+        project.afterEvaluate {
+            frameworkConfig.exports.forEach { exportDeclaration ->
+                project.logger.info("export $exportDeclaration")
+                exportDeclaration.export(project, framework)
+            }
         }
     }
 

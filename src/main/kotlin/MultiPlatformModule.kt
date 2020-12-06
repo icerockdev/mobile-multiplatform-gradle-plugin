@@ -19,7 +19,15 @@ data class MultiPlatformModule(
     }
 }
 
-fun DependencyHandlerScope.mppModule(module: MultiPlatformModule) {
+fun DependencyHandlerScope.mppModule(configuration: String, module: MultiPlatformModule) {
     val name = module.name
-    "commonMainApi"(dependencies.project(path = name))
+    "common$configuration"(dependencies.project(path = name))
+}
+
+fun DependencyHandlerScope.mppModule(module: MultiPlatformModule) {
+    mppModule(configuration = "MainApi", module = module)
+}
+
+fun DependencyHandlerScope.mppTestModule(module: MultiPlatformModule) {
+    mppModule(configuration = "TestApi", module = module)
 }
