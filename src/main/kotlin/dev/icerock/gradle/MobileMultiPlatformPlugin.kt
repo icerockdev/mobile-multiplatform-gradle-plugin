@@ -9,7 +9,6 @@ import dev.icerock.gradle.tasks.CompileCocoaPod
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.tasks.Sync
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
@@ -41,7 +40,7 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
             val kmpExtension =
                 target.extensions.findByType(KotlinMultiplatformExtension::class.java)!!
 
-            setupIosTargets(kmpExtension, target)
+            setupMultiplatformTargets(kmpExtension, target)
 
             kmpExtension.targets
                 .matching { it is KotlinNativeTarget }
@@ -52,10 +51,6 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                         cocoaPodsExtension = cocoaPodsExtension,
                         kotlinNativeTarget = this,
                         target = target
-                    )
-                    configureSyncFrameworkTasks(
-                        kotlinNativeTarget = this,
-                        project = target
                     )
                 }
         }
@@ -94,28 +89,6 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         }
     }
 
-    private fun configureSyncFrameworkTasks(
-        kotlinNativeTarget: KotlinNativeTarget,
-        project: Project
-    ) {
-        kotlinNativeTarget.binaries
-            .matching { it is Framework }
-            .configureEach {
-                val framework = this as Framework
-                val linkTask = framework.linkTask
-                val syncTaskName = linkTask.name.replaceFirst("link", "sync")
-
-                val syncFramework =
-                    project.tasks.create(syncTaskName, Sync::class.java) {
-                        group = "cocoapods"
-
-                        from(framework.outputDirectory)
-                        into(project.file("build/cocoapods/framework"))
-                    }
-                syncFramework.dependsOn(linkTask)
-            }
-    }
-
     private fun setupAndroidLibrary(libraryExtension: LibraryExtension) {
         libraryExtension.sourceSets {
             mapOf(
@@ -133,7 +106,7 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
         }
     }
 
-    private fun setupIosTargets(
+    private fun setupMultiplatformTargets(
         kmpExtension: KotlinMultiplatformExtension,
         project: Project
     ) {
