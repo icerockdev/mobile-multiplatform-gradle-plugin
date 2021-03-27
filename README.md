@@ -1,5 +1,5 @@
 ![mobile-multiplatform](https://user-images.githubusercontent.com/5010169/100611874-9aa17f80-3344-11eb-9737-c50ba63b0f6e.png)  
-[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://api.bintray.com/packages/icerockdev/plugins/mobile-multiplatform/images/download.svg) ](https://bintray.com/icerockdev/plugins/mobile-multiplatform/_latestVersion) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.20-orange)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://img.shields.io/maven-central/v/dev.icerock/mobile-multiplatform) ](https://repo1.maven.org/maven2/dev/icerock/mobile-multiplatform) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.31-orange)
 
 # Mobile Multiplatform gradle plugin
 This is a Gradle plugin for simple setup of Kotlin Multiplatform mobile Gradle modules.  
@@ -8,15 +8,13 @@ This is a Gradle plugin for simple setup of Kotlin Multiplatform mobile Gradle m
 `buildSrc/build.gradle.kts`
 ```kotlin
 repositories {
-    jcenter()
+    mavenCentral()
     google()
-
-    maven { url = uri("https://dl.bintray.com/icerockdev/plugins") }
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.9.0")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20")
+    implementation("dev.icerock:mobile-multiplatform:0.9.1")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31")
     implementation("com.android.tools.build:gradle:4.1.1")
 }
 ```
