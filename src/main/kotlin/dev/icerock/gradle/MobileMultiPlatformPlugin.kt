@@ -9,10 +9,13 @@ import dev.icerock.gradle.tasks.CompileCocoaPod
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 
@@ -86,6 +89,12 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
                     )
                 }
             }
+
+            val rootProjectPath = target.rootProject.buildDir.absolutePath
+            val frameworksPath = "$rootProjectPath/cocoapods/UninstalledProducts/iphonesimulator"
+            target.tasks.withType(KotlinNativeTest::class).all {
+                environment("SIMCTL_CHILD_DYLD_FRAMEWORK_PATH", frameworksPath)
+            }
         }
     }
 
@@ -143,13 +152,11 @@ class MobileMultiPlatformPlugin : Plugin<Project> {
             project = project,
             cocoaPodsExtension = cocoaPodsExtension
         )
+        val frameworksDir = buildTask.frameworksDir
 
         target.binaries
-            .matching { it is Framework }
             .configureEach {
-                val framework = this as Framework
-                val frameworksDir = buildTask.frameworksDir
-                framework.linkerOpts("-F${frameworksDir.absolutePath}")
+                linkerOpts("-F${frameworksDir.absolutePath}")
 
                 linkTask.dependsOn(buildTask)
             }
