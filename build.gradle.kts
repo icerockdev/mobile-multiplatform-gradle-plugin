@@ -3,7 +3,6 @@
  */
 
 import java.util.Base64
-import kotlin.text.String
 
 plugins {
     `kotlin-dsl`
@@ -12,7 +11,7 @@ plugins {
 }
 
 group = "dev.icerock"
-version = "0.9.2"
+version = "0.10.0"
 
 repositories {
     mavenCentral()
@@ -61,6 +60,8 @@ publishing {
                 url.set("https://github.com/icerockdev/mobile-multiplatform-gradle-plugin")
                 licenses {
                     license {
+                        name.set("Apache-2.0")
+                        distribution.set("repo")
                         url.set("https://github.com/icerockdev/mobile-multiplatform-gradle-plugin/blob/master/LICENSE.md")
                     }
                 }
@@ -90,7 +91,7 @@ signing {
         String(Base64.getDecoder().decode(base64Key))
     }
 
-    if(signingKeyId != null) {
+    if (signingKeyId != null) {
         useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
         sign(publishing.publications)
     }

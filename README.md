@@ -20,21 +20,21 @@ dependencies {
 ```
 
 ## Usage
-### Setup gradle module as mobile multiplatform
+### Setup mobile targets without config
 `build.gradle.kts`
 ```kotlin
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.multiplatform")
-    id("dev.icerock.mobile.multiplatform")
+    id("dev.icerock.mobile.multiplatform.targets")
 }
 ```
-Plugin automatically setup android, ios targets. 
-For Android setup sourceset path to `androidMain`. 
-For iOS setup `sync` gradle tasks in group `cocoapods` for `cocoapods` integration.
+
+Plugin automatically setup android, ios targets.
+For Android setup sourceSet path to `androidMain`.
 
 By default used `ios()` targets creation with intermediate source set `iosMain`. To disable it add
- into `gradle.properties` line:
+into `gradle.properties` line:
 ```
 mobile.multiplatform.useIosShortcut=false
 ```
@@ -44,7 +44,75 @@ To disable warning about used ios targets add into `gradle.properties` line:
 mobile.multiplatform.iosTargetWarning=false
 ```
 
-### Definition of dependencies
+### Setup cocoapods integration for iOS
+`build.gradle.kts`
+```kotlin
+plugins {
+    id("dev.icerock.mobile.multiplatform.ios-framework")
+}
+```
+
+Plugin will setup `sync` gradle tasks in group `cocoapods` for `cocoapods` integration.
+
+Example of `podspec` for integration here - https://github.com/icerockdev/moko-template/blob/master/mpp-library/MultiPlatformLibrary.podspec
+
+#### Add artifacts to export
+```kotlin
+// optional for export dependencies into framework header
+framework {
+    export(project = project(":myproject"))
+    export(kotlinNativeExportable = MultiPlatfomLibrary(<...>))
+    export(kotlinNativeExportable = MultiPlatfomModule(<...>))
+    export(arm64Dependency = "my.group:name-iosarm64:0.1.0", x64Dependency = "my.group:name-iosx64:0.1.0")
+}
+```
+
+### Setup cocoapods integration for all Apple frameworks
+`build.gradle.kts`
+```kotlin
+plugins {
+    id("dev.icerock.mobile.multiplatform.apple-framework")
+}
+```
+
+with `framework` configuration you can add dependencies to export (just like in iOS framework).
+
+### Setup CocoaPods interop
+`build.gradle.kts`
+```kotlin
+plugins {
+    id("dev.icerock.mobile.multiplatform.cocoapods")
+}
+
+cocoaPods {
+    podsProject = file("../ios-app/Pods/Pods.xcodeproj") // here should be path to your Pods project
+    buildConfiguration = "dev-debug" // optional, default is "debug"
+
+    pod("MBProgressHUD") // create cInterop and link with CocoaPod where schema and module is same
+    pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat") // create cInterop and link with CocoaPod where schema and module is different
+    pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat", onlyLink = true) // not create cInterop - just link framework with this CocoaPod
+}
+```
+
+Also path to Pods project and configuration can be set globally into `gradle.properties`
+```properties
+mobile.multiplatform.podsProject=ios-app/Pods/Pods.xcodeproj
+mobile.multiplatform.podsConfiguration=dev-debug
+```
+`podsProject` should be relative path from root gradle project.
+
+### Multiple plugins in one line (deprecated, saved for backward compatibility)
+```kotlin
+plugins { 
+    id("dev.icerock.mobile.multiplatform")
+}
+```
+This line will enable:
+- `dev.icerock.mobile.multiplatform.cocoapods`
+- `dev.icerock.mobile.multiplatform.targets`
+- publish of android build variants - `release` and `debug`
+
+### Definition of dependencies (deprecated, saved for backward compatibility)
 ```kotlin
 val mokoTime = MultiPlatformLibrary(
     android = "dev.icerock.moko:time-android:0.1.0",
@@ -62,7 +130,7 @@ val myFeature = MultiPlatformModule(
 )
 ```
 
-### Setup dependencies
+### Setup dependencies (deprecated, saved for backward compatibility)
 `build.gradle.kts`
 ```kotlin
 dependencies {
@@ -71,50 +139,6 @@ dependencies {
     mppModule(myFeature)
 }
 ```
-
-### Setup export as iOS framework
-`build.gradle.kts`
-```kotlin
-plugins {
-    id("dev.icerock.mobile.multiplatform.ios-framework")
-}
-
-// optional for export dependencies into framework header
-framework {
-    export(project = project(":myproject"))
-    export(kotlinNativeExportable = MultiPlatfomLibrary(<...>))
-    export(kotlinNativeExportable = MultiPlatfomModule(<...>))
-    export(arm64Dependency = "my.group:name-iosarm64:0.1.0", x64Dependency = "my.group:name-iosx64:0.1.0")
-}
-```
-
-### Setup sync task for all Apple frameworks
-`build.gradle.kts`
-```kotlin
-plugins {
-    id("dev.icerock.mobile.multiplatform.apple-framework")
-}
-```
-
-### Setup CocoaPods interop
-`build.gradle.kts`
-```kotlin
-cocoaPods {
-    podsProject = file("../ios-app/Pods/Pods.xcodeproj") // here should be path to your Pods project
-    buildConfiguration = "dev-debug" // optional, default is "debug"
-
-    pod("MBProgressHUD") // create cInterop and link with CocoaPod where schema and module is same
-    pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat") // create cInterop and link with CocoaPod where schema and module is different
-    pod(schema = "moko-widgets-flat", module = "mokoWidgetsFlat", onlyLink = true) // not create cInterop - just link framework with this CocoaPod
-}
-```
-
-Also path to Pods project and configuration can be set globally into `gradle.properties`
-```properties
-mobile.multiplatform.podsProject=ios-app/Pods/Pods.xcodeproj
-mobile.multiplatform.podsConfiguration=dev-debug
-```
-`podsProject` should be relative path from root gradle project.
 
 ## License
         
