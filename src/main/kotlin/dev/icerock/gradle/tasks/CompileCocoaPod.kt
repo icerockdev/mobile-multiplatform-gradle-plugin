@@ -12,7 +12,8 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import java.io.BufferedOutputStream
+import dev.icerock.gradle.LogOutputStream
+import org.gradle.api.logging.LogLevel
 import java.io.File
 
 open class CompileCocoaPod : DefaultTask() {
@@ -79,8 +80,8 @@ open class CompileCocoaPod : DefaultTask() {
         val result = project.exec {
             workingDir = podsProject
             commandLine = cmdLine.toList()
-            standardOutput = BufferedOutputStream(System.out)
-            errorOutput = BufferedOutputStream(System.out)
+            standardOutput = LogOutputStream(project.logger, LogLevel.INFO)
+            errorOutput = LogOutputStream(project.logger, LogLevel.ERROR)
         }
         project.logger.lifecycle("xcodebuild result is ${result.exitValue}")
         result.assertNormalExitValue()
