@@ -33,6 +33,12 @@ open class FrameworkConfig {
         ).let { exports.add(it) }
     }
 
+    fun export(artifact: String) {
+        ExportDeclaration.ArtifactStringExport(
+            artifact = artifact
+        ).let { exports.add(it) }
+    }
+
     internal sealed class ExportDeclaration {
         data class ExternalExport(
             val arm64: String,
@@ -61,6 +67,14 @@ open class FrameworkConfig {
         ) : ExportDeclaration() {
             override fun export(project: Project, framework: Framework) {
                 kotlinNativeExportable.export(project, framework)
+            }
+        }
+
+        data class ArtifactStringExport(
+            val artifact: String
+        ) : ExportDeclaration() {
+            override fun export(project: Project, framework: Framework) {
+                framework.export(this.artifact)
             }
         }
 
