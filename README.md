@@ -1,5 +1,5 @@
 ![mobile-multiplatform](https://user-images.githubusercontent.com/5010169/100611874-9aa17f80-3344-11eb-9737-c50ba63b0f6e.png)  
-[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://img.shields.io/maven-central/v/dev.icerock/mobile-multiplatform) ](https://repo1.maven.org/maven2/dev/icerock/mobile-multiplatform) ![kotlin-version](https://img.shields.io/badge/kotlin-1.4.31-orange)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0) [![Download](https://img.shields.io/maven-central/v/dev.icerock/mobile-multiplatform) ](https://repo1.maven.org/maven2/dev/icerock/mobile-multiplatform)
 
 # Mobile Multiplatform gradle plugin
 This is a Gradle plugin for simple setup of Kotlin Multiplatform mobile Gradle modules.  
@@ -13,8 +13,8 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.10.1")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31")
+    implementation("dev.icerock:mobile-multiplatform:0.11.0")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.20")
     implementation("com.android.tools.build:gradle:4.1.1")
 }
 ```
@@ -64,6 +64,8 @@ framework {
     export(kotlinNativeExportable = MultiPlatfomLibrary(<...>))
     export(kotlinNativeExportable = MultiPlatfomModule(<...>))
     export(arm64Dependency = "my.group:name-iosarm64:0.1.0", x64Dependency = "my.group:name-iosx64:0.1.0")
+    export(artifact = "my.group:name:0.1.0") // common artifact
+    export(provider = libs.myLib) // gradle 7 version catalog libraries accessors
 }
 ```
 
