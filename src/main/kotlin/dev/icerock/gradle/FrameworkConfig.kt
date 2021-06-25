@@ -6,6 +6,8 @@ package dev.icerock.gradle
 
 import KotlinNativeExportable
 import org.gradle.api.Project
+import org.gradle.api.artifacts.MinimalExternalModuleDependency
+import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.konan.target.Architecture
 
@@ -36,6 +38,12 @@ open class FrameworkConfig {
     fun export(artifact: String) {
         ExportDeclaration.ArtifactStringExport(
             artifact = artifact
+        ).let { exports.add(it) }
+    }
+
+    fun export(provider: Provider<MinimalExternalModuleDependency>) {
+        ExportDeclaration.VersionCatalogExport(
+            provider = provider
         ).let { exports.add(it) }
     }
 
@@ -75,6 +83,14 @@ open class FrameworkConfig {
         ) : ExportDeclaration() {
             override fun export(project: Project, framework: Framework) {
                 framework.export(this.artifact)
+            }
+        }
+
+        data class VersionCatalogExport(
+            val provider: Provider<MinimalExternalModuleDependency>
+        ) : ExportDeclaration() {
+            override fun export(project: Project, framework: Framework) {
+                framework.export(this.provider.get())
             }
         }
 
