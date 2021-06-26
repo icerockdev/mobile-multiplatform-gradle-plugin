@@ -18,7 +18,7 @@ class AndroidSourcesPlugin : Plugin<Project> {
                 val newRoot = "src/android$capitalizedName"
                 setRoot(newRoot)
 
-                target.logger.debug("set new root for $name android source set - $newRoot")
+                target.logger.info("set new root for $name android source set - $newRoot")
             }
         }
     }

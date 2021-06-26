@@ -16,7 +16,7 @@ class AndroidManifestPlugin : Plugin<Project> {
             val newManifestPath = "src/androidMain/AndroidManifest.xml"
             mainSourceSet.manifest.srcFile(newManifestPath)
 
-            target.logger.debug("set new android manifest path $newManifestPath")
+            target.logger.info("set new android manifest path $newManifestPath")
         }
     }
 }

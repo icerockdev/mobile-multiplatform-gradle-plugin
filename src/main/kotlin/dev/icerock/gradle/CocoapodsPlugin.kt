@@ -92,7 +92,7 @@ class CocoapodsPlugin : Plugin<Project> {
         pod: CocoaPodInfo,
         cocoaPodsExtension: CocoapodsConfig
     ) {
-        project.logger.debug("configure cocoaPod $pod in $target of $project")
+        project.logger.info("configure cocoaPod $pod in $target of $project")
 
         val buildTask: CompileCocoaPod = configurePodCompilation(
             kotlinNativeTarget = target,
@@ -116,7 +116,7 @@ class CocoapodsPlugin : Plugin<Project> {
         project: Project,
         cocoaPodsExtension: CocoapodsConfig
     ): CompileCocoaPod {
-        project.logger.debug("configure compilation pod $pod in $kotlinNativeTarget of $project")
+        project.logger.info("configure compilation pod $pod in $kotlinNativeTarget of $project")
 
         val (sdk, arch) = when (kotlinNativeTarget.konanTarget) {
             KonanTarget.IOS_ARM64 -> "iphoneos" to "arm64"
@@ -159,7 +159,7 @@ class CocoapodsPlugin : Plugin<Project> {
         pod: CocoaPodInfo,
         project: Project
     ) {
-        project.logger.debug("configure cInterop for pod $pod in $target of $project")
+        project.logger.info("configure cInterop for pod $pod in $target of $project")
 
         if (pod.precompiled) {
             createCInteropTask(
