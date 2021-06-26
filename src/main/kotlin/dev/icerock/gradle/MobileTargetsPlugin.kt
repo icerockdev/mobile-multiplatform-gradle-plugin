@@ -4,42 +4,24 @@
 
 package dev.icerock.gradle
 
-import com.android.build.gradle.LibraryExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 class MobileTargetsPlugin : Plugin<Project> {
-    override fun apply(target: Project) {
-        target.plugins.withId("com.android.library") {
-            val androidLibraryExtension =
-                target.extensions.findByType(LibraryExtension::class.java)!!
+    private val androidManifestPlugin = AndroidManifestPlugin()
+    private val androidSourcesPlugin = AndroidSourcesPlugin()
 
-            setupAndroidLibrary(androidLibraryExtension)
-        }
+    override fun apply(target: Project) {
+        // backward compatibility apply
+        androidManifestPlugin.apply(target)
+        androidSourcesPlugin.apply(target)
 
         target.plugins.withId("org.jetbrains.kotlin.multiplatform") {
             val kmpExtension =
                 target.extensions.findByType(KotlinMultiplatformExtension::class.java)!!
 
             setupMultiplatformTargets(kmpExtension, target)
-        }
-    }
-
-    private fun setupAndroidLibrary(libraryExtension: LibraryExtension) {
-        libraryExtension.sourceSets {
-            mapOf(
-                "main" to "src/androidMain",
-                "release" to "src/androidMainRelease",
-                "debug" to "src/androidMainDebug",
-                "test" to "src/androidUnitTest",
-                "testRelease" to "src/androidUnitTestRelease",
-                "testDebug" to "src/androidUnitTestDebug"
-            ).forEach { (name, root) ->
-                getByName(name).run {
-                    setRoot(root)
-                }
-            }
         }
     }
 
