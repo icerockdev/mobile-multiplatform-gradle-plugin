@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.11.0")
+    implementation("dev.icerock:mobile-multiplatform:0.12.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.20")
     implementation("com.android.tools.build:gradle:4.1.1")
 }
@@ -31,7 +31,8 @@ plugins {
 ```
 
 Plugin automatically setup android, ios targets.
-For Android setup sourceSet path to `androidMain`.
+Android target also automatically configured with `dev.icerock.mobile.multiplatform.android-manifest` 
+and `dev.icerock.mobile.multiplatform.android-sources` plugins.
 
 By default used `ios()` targets creation with intermediate source set `iosMain`. To disable it add
 into `gradle.properties` line:
@@ -43,6 +44,28 @@ To disable warning about used ios targets add into `gradle.properties` line:
 ```
 mobile.multiplatform.iosTargetWarning=false
 ```
+
+### Setup AndroidManifest.xml in androidMain sourceSet
+`build.gradle.kts`
+```kotlin
+plugins {
+    id("dev.icerock.mobile.multiplatform.android-manifest")
+}
+```
+
+After enable this plugin you can move `AndroidManifest.xml` from `src/main/AndroidManifest.xml` to
+`src/androidMain/AndroidManifest.xml`
+
+### Setup android sourceSets in android prefixed source sets
+`build.gradle.kts`
+```kotlin
+plugins {
+    id("dev.icerock.mobile.multiplatform.android-sources")
+}
+```
+
+After enable this plugin you can move android's `main` source set to `androidMain`, `release` 
+to `androidRelease`, `test` to `androidTest` etc.
 
 ### Setup cocoapods integration for iOS
 `build.gradle.kts`

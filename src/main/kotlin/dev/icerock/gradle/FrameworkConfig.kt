@@ -7,6 +7,7 @@ package dev.icerock.gradle
 import KotlinNativeExportable
 import org.gradle.api.Project
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.konan.target.Architecture
@@ -24,27 +25,23 @@ open class FrameworkConfig {
     }
 
     fun export(project: Project) {
-        ExportDeclaration.ProjectExport(
-            project = project
-        ).let { exports.add(it) }
+        ExportDeclaration.ProjectExport(project).let { exports.add(it) }
     }
 
     fun export(kotlinNativeExportable: KotlinNativeExportable) {
-        ExportDeclaration.Exportable(
-            kotlinNativeExportable = kotlinNativeExportable
-        ).let { exports.add(it) }
+        ExportDeclaration.Exportable(kotlinNativeExportable).let { exports.add(it) }
     }
 
     fun export(artifact: String) {
-        ExportDeclaration.ArtifactStringExport(
-            artifact = artifact
-        ).let { exports.add(it) }
+        ExportDeclaration.ArtifactStringExport(artifact).let { exports.add(it) }
     }
 
     fun export(provider: Provider<MinimalExternalModuleDependency>) {
-        ExportDeclaration.VersionCatalogExport(
-            provider = provider
-        ).let { exports.add(it) }
+        ExportDeclaration.VersionCatalogExport(provider.get()).let { exports.add(it) }
+    }
+
+    fun export(project: ProjectDependency) {
+        ExportDeclaration.ProjectExport(project.dependencyProject).let { exports.add(it) }
     }
 
     internal sealed class ExportDeclaration {
@@ -87,10 +84,10 @@ open class FrameworkConfig {
         }
 
         data class VersionCatalogExport(
-            val provider: Provider<MinimalExternalModuleDependency>
+            val externalModuleDependency: MinimalExternalModuleDependency
         ) : ExportDeclaration() {
             override fun export(project: Project, framework: Framework) {
-                framework.export(this.provider.get())
+                framework.export(externalModuleDependency)
             }
         }
 
