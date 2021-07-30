@@ -102,9 +102,33 @@ signing {
 
 gradlePlugin {
     plugins {
-        create("mobile-multiplatform-gradle-plugin") {
-            id = "dev.icerock.mobile.multiplatform" //??
-            implementationClass = "dev.icerock.gradle.GradlePlugin"
+        create("multiplatform") {
+            id = "dev.icerock.mobile.multiplatform"
+            implementationClass = "dev.icerock.gradle.MobileMultiPlatformPlugin"
+        }
+        create("android-manifest") {
+            id = "dev.icerock.mobile.multiplatform.android-manifest"
+            implementationClass = "dev.icerock.gradle.AndroidManifestPlugin"
+        }
+        create("android-sources") {
+            id = "dev.icerock.mobile.multiplatform.android-sources"
+            implementationClass = "dev.icerock.gradle.AndroidSourcesPlugin"
+        }
+        create("apple-framework") {
+            id = "dev.icerock.mobile.multiplatform.apple-framework"
+            implementationClass = "dev.icerock.gradle.AppleFrameworkPlugin"
+        }
+        create("cocoapods") {
+            id = "dev.icerock.mobile.multiplatform.cocoapods"
+            implementationClass = "dev.icerock.gradle.CocoapodsPlugin"
+        }
+        create("ios-framework") {
+            id = "dev.icerock.mobile.multiplatform.ios-framework"
+            implementationClass = "dev.icerock.gradle.IosFrameworkPlugin"
+        }
+        create("targets") {
+            id = "dev.icerock.mobile.multiplatform.targets"
+            implementationClass = "dev.icerock.gradle.MobileTargetsPlugin"
         }
     }
 }
@@ -116,8 +140,26 @@ pluginBundle {
     tags = listOf("kotlin", "kotlin-multiplatform")
 
     plugins {
-        getByName("mobile-multiplatform-gradle-plugin") {
-            displayName = "Mobile Multiplatform gradle plugin"
+        getByName("multiplatform") {
+            displayName = "deprecated"
+        }
+        getByName("android-manifest") {
+            displayName = "android-manifest"
+        }
+        getByName("android-sources") {
+            displayName = "android-sources"
+        }
+        getByName("apple-framework") {
+            displayName = "apple-framework"
+        }
+        getByName("cocoapods") {
+            displayName = "cocoapods"
+        }
+        getByName("ios-framework") {
+            displayName = "ios-framework"
+        }
+        getByName("targets") {
+            displayName = "targets"
         }
     }
 
@@ -125,14 +167,5 @@ pluginBundle {
         groupId = project.group as String
         artifactId = project.name
         version = project.version as String
-    }
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "localPluginRepository"
-            url = uri("/Users/ashestak/.m2")
-        }
     }
 }
