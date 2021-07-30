@@ -1,0 +1,11 @@
+[versions]
+kotlinVersion = "1.5.21"
+androidGradlePluginVerison = "4.2.1"
+publishPluginVersion = "0.15.0"
+mobileMultiplatformGradlePluginVersion = "0.1211111.0"
+
+[libraries]
+androidGradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePluginVerison" }
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinVersion"}
+kotlinCompilerEmbeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlinVersion" }
+publisPlugin = { module = "com.gradle.publish:plugin-publish-plugin", version.ref = "publishPluginVersion"}

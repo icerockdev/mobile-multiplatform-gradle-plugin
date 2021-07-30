@@ -6,12 +6,15 @@ import java.util.Base64
 
 plugins {
     `kotlin-dsl`
-    `maven-publish`
-    `signing`
+    id("org.gradle.maven-publish")
+    id("signing")
+    id("com.gradle.plugin-publish") version ("0.15.0")
+    id("java-gradle-plugin")
 }
 
+
 group = "dev.icerock"
-version = "0.12.0"
+version = libs.versions.mobileMultiplatformGradlePluginVersion.get()
 
 repositories {
     mavenCentral()
@@ -26,9 +29,9 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    compileOnly("com.android.tools.build:gradle:4.1.1")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31")
-    compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.31")
+    compileOnly(libs.androidGradlePlugin)
+    compileOnly(libs.kotlinGradlePlugin)
+    compileOnly(libs.kotlinCompilerEmbeddable)
 }
 
 kotlinDslPluginOptions {
@@ -94,5 +97,42 @@ signing {
     if (signingKeyId != null) {
         useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
         sign(publishing.publications)
+    }
+}
+
+gradlePlugin {
+    plugins {
+        create("mobile-multiplatform-gradle-plugin") {
+            id = "dev.icerock.mobile.multiplatform" //??
+            implementationClass = "dev.icerock.gradle.GradlePlugin"
+        }
+    }
+}
+
+pluginBundle {
+    website = "https://github.com/icerockdev/mobile-multiplatform-gradle-plugin"
+    vcsUrl = "https://github.com/icerockdev/mobile-multiplatform-gradle-plugin"
+    description = "Gradle plugin for simplify Kotlin Multiplatform Mobile configurations"
+    tags = listOf("kotlin", "kotlin-multiplatform")
+
+    plugins {
+        getByName("mobile-multiplatform-gradle-plugin") {
+            displayName = "Mobile Multiplatform gradle plugin"
+        }
+    }
+
+    mavenCoordinates {
+        groupId = project.group as String
+        artifactId = project.name
+        version = project.version as String
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "localPluginRepository"
+            url = uri("/Users/ashestak/.m2")
+        }
     }
 }
