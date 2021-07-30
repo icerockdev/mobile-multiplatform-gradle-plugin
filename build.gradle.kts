@@ -104,30 +104,44 @@ gradlePlugin {
     plugins {
         create("multiplatform") {
             id = "dev.icerock.mobile.multiplatform"
+            displayName = "multiplatform"
+            description = "Multiple plugins in one line (deprecated, saved for backward compatibility)"
             implementationClass = "dev.icerock.gradle.MobileMultiPlatformPlugin"
         }
         create("android-manifest") {
             id = "dev.icerock.mobile.multiplatform.android-manifest"
+            displayName = "android-manifest"
+            description = "After enable this plugin you can move AndroidManifest.xml from src/main/AndroidManifest.xml to src/androidMain/AndroidManifest.xml"
             implementationClass = "dev.icerock.gradle.AndroidManifestPlugin"
         }
         create("android-sources") {
             id = "dev.icerock.mobile.multiplatform.android-sources"
+            displayName = "android-sources"
+            description = "After enable this plugin you can move android's main source set to androidMain, release to androidRelease, test to androidTest etc."
             implementationClass = "dev.icerock.gradle.AndroidSourcesPlugin"
         }
         create("apple-framework") {
             id = "dev.icerock.mobile.multiplatform.apple-framework"
+            displayName = "apple-framework"
+            description = "After enable this plugin while using framework configuration you can add dependencies to export just like in iOS framework."
             implementationClass = "dev.icerock.gradle.AppleFrameworkPlugin"
         }
         create("cocoapods") {
             id = "dev.icerock.mobile.multiplatform.cocoapods"
+            displayName = "cocoapods"
+            description = "Setup CocoaPods interop. Path to Pods project and configuration can be set globally into gradle.properties"
             implementationClass = "dev.icerock.gradle.CocoapodsPlugin"
         }
         create("ios-framework") {
             id = "dev.icerock.mobile.multiplatform.ios-framework"
+            displayName = "ios-framework"
+            description = "Plugin will setup sync gradle tasks in group cocoapods for cocoapods integration. Example of podspec for integration here - https://github.com/icerockdev/moko-template/blob/master/mpp-library/MultiPlatformLibrary.podspec"
             implementationClass = "dev.icerock.gradle.IosFrameworkPlugin"
         }
         create("targets") {
             id = "dev.icerock.mobile.multiplatform.targets"
+            displayName = "targets"
+            description = "Plugin automatically setup android, ios targets. Android target also automatically configured with dev.icerock.mobile.multiplatform.android-manifest and dev.icerock.mobile.multiplatform.android-sources plugins."
             implementationClass = "dev.icerock.gradle.MobileTargetsPlugin"
         }
     }
@@ -138,30 +152,6 @@ pluginBundle {
     vcsUrl = "https://github.com/icerockdev/mobile-multiplatform-gradle-plugin"
     description = "Gradle plugin for simplify Kotlin Multiplatform Mobile configurations"
     tags = listOf("kotlin", "kotlin-multiplatform")
-
-    plugins {
-        getByName("multiplatform") {
-            displayName = "deprecated"
-        }
-        getByName("android-manifest") {
-            displayName = "android-manifest"
-        }
-        getByName("android-sources") {
-            displayName = "android-sources"
-        }
-        getByName("apple-framework") {
-            displayName = "apple-framework"
-        }
-        getByName("cocoapods") {
-            displayName = "cocoapods"
-        }
-        getByName("ios-framework") {
-            displayName = "ios-framework"
-        }
-        getByName("targets") {
-            displayName = "targets"
-        }
-    }
 
     mavenCoordinates {
         groupId = project.group as String
