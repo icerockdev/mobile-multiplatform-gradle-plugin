@@ -8,8 +8,8 @@ This is a Gradle plugin for simple setup of Kotlin Multiplatform mobile Gradle m
 `buildSrc/build.gradle.kts`
 ```kotlin
 repositories {
-    mavenCentral()
     google()
+    gradlePluginPortal()
 }
 
 dependencies {
