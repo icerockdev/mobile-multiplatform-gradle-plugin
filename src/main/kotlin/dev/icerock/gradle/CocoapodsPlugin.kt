@@ -121,6 +121,7 @@ class CocoapodsPlugin : Plugin<Project> {
         val (sdk, arch) = when (kotlinNativeTarget.konanTarget) {
             KonanTarget.IOS_ARM64 -> "iphoneos" to "arm64"
             KonanTarget.IOS_X64 -> "iphonesimulator" to "x86_64"
+            KonanTarget.IOS_SIMULATOR_ARM64 -> "iphonesimulator" to "arm64"
             else -> throw IllegalArgumentException("${kotlinNativeTarget.konanTarget} is unsupported")
         }
         val taskName = generateCompileCocoaPodTaskName(kotlinNativeTarget, pod)
@@ -146,6 +147,7 @@ class CocoapodsPlugin : Plugin<Project> {
         val (sdk, arch) = when (kotlinNativeTarget.konanTarget) {
             KonanTarget.IOS_ARM64 -> "iphoneos" to "arm64"
             KonanTarget.IOS_X64 -> "iphonesimulator" to "x86_64"
+            KonanTarget.IOS_SIMULATOR_ARM64 -> "iphonesimulator" to "arm64"
             else -> throw IllegalArgumentException("${kotlinNativeTarget.konanTarget} is unsupported")
         }
         val capitalizedPodName = pod.capitalizedModule
