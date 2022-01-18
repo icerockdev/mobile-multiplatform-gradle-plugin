@@ -13,9 +13,9 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.12.0")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21")
-    implementation("com.android.tools.build:gradle:4.2.1")
+    implementation("dev.icerock:mobile-multiplatform:0.13.0")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
+    implementation("com.android.tools.build:gradle:7.0.4")
 }
 ```
 
@@ -40,9 +40,10 @@ into `gradle.properties` line:
 mobile.multiplatform.useIosShortcut=false
 ```
 
-To disable warning about used ios targets add into `gradle.properties` line:
+Also by default `iosSimulatorArm64` target will be created (with connection to `iosMain` and
+ `iosTest` if was used ios shortcut. To disable it add into `gradle.properties` line:
 ```
-mobile.multiplatform.iosTargetWarning=false
+mobile.multiplatform.withoutIosSimulatorArm64=false
 ```
 
 ### Setup AndroidManifest.xml in androidMain sourceSet
