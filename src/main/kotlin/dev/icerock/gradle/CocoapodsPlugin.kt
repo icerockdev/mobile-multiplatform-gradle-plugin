@@ -77,12 +77,6 @@ class CocoapodsPlugin : Plugin<Project> {
                     )
                 }
             }
-
-            val rootProjectPath = target.rootProject.buildDir.absolutePath
-            val frameworksPath = "$rootProjectPath/cocoapods/UninstalledProducts/iphonesimulator"
-            target.tasks.withType(KotlinNativeTest::class).all {
-                environment("SIMCTL_CHILD_DYLD_FRAMEWORK_PATH", frameworksPath)
-            }
         }
     }
 
@@ -107,6 +101,13 @@ class CocoapodsPlugin : Plugin<Project> {
                 linkerOpts("-F${frameworksDir.absolutePath}")
 
                 linkTask.dependsOn(buildTask)
+            }
+
+        project.tasks
+            .withType(KotlinNativeTest::class)
+            .matching { it.targetName == target.name }
+            .configureEach {
+                environment("SIMCTL_CHILD_DYLD_FRAMEWORK_PATH", frameworksDir.absolutePath)
             }
     }
 
