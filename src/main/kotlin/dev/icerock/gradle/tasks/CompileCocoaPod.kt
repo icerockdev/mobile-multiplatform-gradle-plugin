@@ -6,14 +6,14 @@ package dev.icerock.gradle.tasks
 
 import dev.icerock.gradle.CocoaPodInfo
 import dev.icerock.gradle.CocoapodsConfig
+import dev.icerock.gradle.LogOutputStream
 import org.gradle.api.DefaultTask
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import dev.icerock.gradle.LogOutputStream
-import org.gradle.api.logging.LogLevel
 import java.io.File
 
 open class CompileCocoaPod : DefaultTask() {
@@ -49,7 +49,9 @@ open class CompileCocoaPod : DefaultTask() {
     val configuration: String
         get() = config.buildConfiguration
 
-    private val outputDir: File get() = File(project.buildDir, "cocoapods")
+    private val cocoapodsDir: File get() = File(project.buildDir, "cocoapods")
+    private val outputDir: File get() = File(cocoapodsDir, compileArch)
+    private val derivedData: File get() = File(cocoapodsDir, "DerivedData")
 
     @get:OutputDirectory
     val frameworksDir: File
@@ -58,8 +60,8 @@ open class CompileCocoaPod : DefaultTask() {
     @TaskAction
     fun compile() {
         val podsProjectPath = podsProject.absolutePath
-        val podBuildDir = outputDir.absolutePath
-        val derivedData = File(outputDir, "DerivedData").absolutePath
+        val outputPath = outputDir.absolutePath
+        val derivedDataPath = derivedData.absolutePath
         val cmdLine = arrayOf(
             "xcodebuild",
             "-project", podsProjectPath,
@@ -67,8 +69,8 @@ open class CompileCocoaPod : DefaultTask() {
             "-sdk", compileSdk,
             "-arch", compileArch,
             "-configuration", configuration,
-            "-derivedDataPath", derivedData,
-            "SYMROOT=$podBuildDir",
+            "-derivedDataPath", derivedDataPath,
+            "SYMROOT=$outputPath",
             "DEPLOYMENT_LOCATION=YES",
             "SKIP_INSTALL=YES",
             "build"
