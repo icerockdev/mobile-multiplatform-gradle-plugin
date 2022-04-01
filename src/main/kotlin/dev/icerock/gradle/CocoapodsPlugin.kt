@@ -61,19 +61,20 @@ class CocoapodsPlugin : Plugin<Project> {
                         pod = this,
                         cocoaPodsExtension = cocoaPodsExtension
                     )
-
                 }
 
                 if (!onlyLink) {
                     configureCInterop(
                         target = kotlinNativeTarget,
                         pod = this,
-                        project = target
+                        project = target,
+                        config = cocoaPodsExtension
                     )
                 } else if (precompiled) {
                     configurePrecompiledLink(
                         target = kotlinNativeTarget,
-                        pod = this
+                        pod = this,
+                        config = cocoaPodsExtension
                     )
                 }
             }
@@ -160,7 +161,8 @@ class CocoapodsPlugin : Plugin<Project> {
     private fun configureCInterop(
         target: KotlinNativeTarget,
         pod: CocoaPodInfo,
-        project: Project
+        project: Project,
+        config: CocoapodsConfig
     ) {
         project.logger.info("configure cInterop for pod $pod in $target of $project")
 
@@ -169,7 +171,7 @@ class CocoapodsPlugin : Plugin<Project> {
                 project = project,
                 kotlinNativeTarget = target,
                 pod = pod,
-                frameworksPaths = pod.frameworksPaths
+                frameworksPaths = pod.frameworksPaths(config.podsProject.parentFile, target),
             )
         } else {
             val compileName = generateCompileCocoaPodTaskName(target, pod)
@@ -221,14 +223,15 @@ linkerOpts = -framework ${pod.module} $extraLinkerOptsLine
 
     private fun configurePrecompiledLink(
         target: KotlinNativeTarget,
-        pod: CocoaPodInfo
+        pod: CocoaPodInfo,
+        config: CocoapodsConfig
     ) {
         target.binaries
             .matching { it is Framework }
             .configureEach {
                 val framework = this as Framework
 
-                val frameworks = pod.frameworksPaths
+                val frameworks = pod.frameworksPaths(config.podsProject.parentFile, target)
                     .map { it.path }
                     .map { "-F$it" }
 

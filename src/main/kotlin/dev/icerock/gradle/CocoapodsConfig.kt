@@ -6,6 +6,7 @@ package dev.icerock.gradle
 
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.model.ObjectFactory
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import java.io.File
 import javax.inject.Inject
 
@@ -34,7 +35,7 @@ open class CocoapodsConfig @Inject constructor(objectFactory: ObjectFactory) {
         extraModules: List<String>? = null,
         extraLinkerOpts: List<String>? = null,
         onlyLink: Boolean = false,
-        frameworksPathsResolver: (File) -> List<File>
+        frameworksPathsResolver: (File, KotlinNativeTarget) -> List<File>
     ) {
         if (!::podsProject.isInitialized) {
             throw IllegalStateException("podsProject property should be set before call precompiledPod")
@@ -43,7 +44,7 @@ open class CocoapodsConfig @Inject constructor(objectFactory: ObjectFactory) {
             this.scheme = scheme
             this.precompiled = true
             this.onlyLink = onlyLink
-            this.frameworksPaths = frameworksPathsResolver(podsProject.parentFile)
+            this.frameworksPaths = frameworksPathsResolver
             if (extraModules != null) this.extraModules = extraModules
             if (extraLinkerOpts != null) this.extraLinkerOpts = extraLinkerOpts
         }.configured()

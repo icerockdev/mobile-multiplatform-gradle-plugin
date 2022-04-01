@@ -4,6 +4,7 @@
 
 package dev.icerock.gradle
 
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import java.io.File
 
 open class CocoaPodInfo(
@@ -12,7 +13,7 @@ open class CocoaPodInfo(
     var scheme: String = name
     var onlyLink: Boolean = false
     var precompiled: Boolean = false
-    var frameworksPaths: List<File> = emptyList()
+    var frameworksPaths: (File, KotlinNativeTarget) -> List<File> = { _, _ -> emptyList() }
 
     val module: String get() = name
     val capitalizedModule: String get() = module.capitalize()
