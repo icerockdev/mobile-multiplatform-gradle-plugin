@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.icerock:mobile-multiplatform:0.14.1")
+    implementation("dev.icerock:mobile-multiplatform:0.14.2")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
     implementation("com.android.tools.build:gradle:7.0.4")
 }

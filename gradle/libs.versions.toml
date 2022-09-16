@@ -2,7 +2,7 @@
 kotlinVersion = "1.6.10"
 androidGradlePluginVerison = "7.0.4"
 publishPluginVersion = "0.15.0"
-mobileMultiplatformGradlePluginVersion = "0.14.1"
+mobileMultiplatformGradlePluginVersion = "0.14.2"
 
 [libraries]
 androidGradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePluginVerison" }

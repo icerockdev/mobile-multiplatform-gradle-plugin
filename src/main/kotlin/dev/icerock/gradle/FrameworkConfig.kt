@@ -17,6 +17,7 @@ open class FrameworkConfig {
 
     internal val exports = mutableListOf<ExportDeclaration>()
 
+    @Deprecated("use common artifact only")
     fun export(arm64Dependency: String, x64Dependency: String) {
         ExportDeclaration.ExternalExport(
             arm64 = arm64Dependency,

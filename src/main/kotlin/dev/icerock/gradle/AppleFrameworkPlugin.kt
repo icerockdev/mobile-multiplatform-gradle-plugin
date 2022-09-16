@@ -11,6 +11,7 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 
 open class AppleFrameworkPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -18,7 +19,7 @@ open class AppleFrameworkPlugin : Plugin<Project> {
         val kmpExtension =
             target.extensions.findByType(KotlinMultiplatformExtension::class.java) ?: return
 
-        kmpExtension.targets.withType<KotlinNativeTarget>().matching(::targetFilter).all {
+        kmpExtension.targets.withType<KotlinNativeTarget>().matching(::targetFilter).configureEach {
             binaries {
                 framework(frameworkExtension.name) {
                     configureFrameworkExports(this, frameworkExtension)
@@ -45,8 +46,8 @@ open class AppleFrameworkPlugin : Plugin<Project> {
     private fun configureSyncFrameworkTasks(
         framework: Framework
     ) {
-        val linkTask = framework.linkTask
-        val syncTaskName = linkTask.name.replaceFirst("link", "sync")
+        val linkTask: KotlinNativeLink = framework.linkTask
+        val syncTaskName: String = linkTask.name.replaceFirst("link", "sync")
 
         framework.project.tasks.create(syncTaskName, SyncCocoaPodFrameworkTask::class.java) {
             inputDir = framework.outputDirectory

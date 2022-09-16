@@ -19,12 +19,6 @@ version = libs.versions.mobileMultiplatformGradlePluginVersion.get()
 repositories {
     mavenCentral()
     google()
-
-    jcenter {
-        content {
-            includeGroup("org.jetbrains.trove4j")
-        }
-    }
 }
 
 dependencies {
@@ -32,10 +26,6 @@ dependencies {
     compileOnly(libs.androidGradlePlugin)
     compileOnly(libs.kotlinGradlePlugin)
     compileOnly(libs.kotlinCompilerEmbeddable)
-}
-
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
 }
 
 java {
