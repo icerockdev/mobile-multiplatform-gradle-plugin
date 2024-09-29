@@ -34,10 +34,8 @@ class CocoapodsPlugin : Plugin<Project> {
                 target.extensions.findByType(KotlinMultiplatformExtension::class.java)!!
 
             kmpExtension.targets
-                .matching { it is KotlinNativeTarget }
+                .withType<KotlinNativeTarget>()
                 .configureEach {
-                    this as KotlinNativeTarget
-
                     configureCocoaPodsDependencies(
                         cocoaPodsExtension = cocoaPodsExtension,
                         kotlinNativeTarget = this,

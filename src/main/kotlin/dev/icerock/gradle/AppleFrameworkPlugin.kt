@@ -4,13 +4,17 @@
 
 package dev.icerock.gradle
 
-import dev.icerock.gradle.tasks.SyncCocoaPodFrameworkTask
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
+import java.io.File
 
 open class AppleFrameworkPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -18,7 +22,7 @@ open class AppleFrameworkPlugin : Plugin<Project> {
         val kmpExtension =
             target.extensions.findByType(KotlinMultiplatformExtension::class.java) ?: return
 
-        kmpExtension.targets.withType<KotlinNativeTarget>().matching(::targetFilter).all {
+        kmpExtension.targets.withType<KotlinNativeTarget>().matching(::targetFilter).configureEach {
             binaries {
                 framework(frameworkExtension.name) {
                     configureFrameworkExports(this, frameworkExtension)
@@ -45,13 +49,24 @@ open class AppleFrameworkPlugin : Plugin<Project> {
     private fun configureSyncFrameworkTasks(
         framework: Framework
     ) {
-        val linkTask = framework.linkTask
-        val syncTaskName = linkTask.name.replaceFirst("link", "sync")
+        val linkTask: TaskProvider<out KotlinNativeLink> = framework.linkTaskProvider
+        val syncTaskName: String = linkTask.name.replaceFirst("link", "sync")
+        val project: Project = framework.project
 
-        framework.project.tasks.create(syncTaskName, SyncCocoaPodFrameworkTask::class.java) {
-            inputDir = framework.outputDirectory
+        val outputDir = File(project.buildDir, "cocoapods/framework")
+        val inputDir: File = framework.outputDirectory
 
-            dependsOn(linkTask)
+        val syncTask: TaskProvider<Exec> = project.tasks.register(syncTaskName, Exec::class.java) {
+            group = "cocoapods"
+
+            commandLine("cp", "-R", inputDir.absolutePath, outputDir.absolutePath)
+
+            doFirst {
+                if (outputDir.exists()) {
+                    outputDir.deleteRecursively()
+                }
+            }
         }
+        syncTask.dependsOn(linkTask)
     }
 }
