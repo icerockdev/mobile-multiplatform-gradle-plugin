@@ -54,7 +54,7 @@ open class AppleFrameworkPlugin : Plugin<Project> {
         val project: Project = framework.project
 
         val outputDir = File(project.buildDir, "cocoapods/framework")
-        val inputDir: File = framework.outputDirectory
+        val inputDir: File = framework.outputFile
 
         val syncTask: TaskProvider<Exec> = project.tasks.register(syncTaskName, Exec::class.java) {
             group = "cocoapods"
@@ -65,6 +65,7 @@ open class AppleFrameworkPlugin : Plugin<Project> {
                 if (outputDir.exists()) {
                     outputDir.deleteRecursively()
                 }
+                outputDir.mkdirs()
             }
         }
         syncTask.dependsOn(linkTask)
